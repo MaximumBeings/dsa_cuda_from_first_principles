@@ -23,12 +23,65 @@ Counting how many elements fall into each of 10 buckets sounds like it should be
 
 ### The Sequential (CPU) Baseline
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 7.1 -- The Sequential (CPU) Baseline.
+// hist[b]++ is completely correct on a single CPU thread -- no race is
+// possible when there is exactly one thread ever touching hist.
+
 std::vector<int> histogram_cpu(const std::vector<int>& bucket_of, int num_buckets) {
     std::vector<int> hist(num_buckets, 0);
-    for (int b : bucket_of) hist[b]++;   // completely correct: one thread, no race possible
+    for (int b : bucket_of) hist[b]++;
     return hist;
 }
+
+int main() {
+    printf("=== Section 7.1 CPU baseline: sequential histogram ===\n\n");
+
+    const int N = 1000, NUM_BUCKETS = 10;
+    std::vector<int> bucket_of(N);
+    for (int i = 0; i < N; i++) bucket_of[i] = i % NUM_BUCKETS;
+
+    std::vector<int> hist = histogram_cpu(bucket_of, NUM_BUCKETS);
+
+    printf("N = %d elements, round-robin into %d buckets\n\n", N, NUM_BUCKETS);
+    printf("bucket counts: ");
+    for (int c : hist) printf("%d ", c);
+    printf("\n\n");
+
+    bool ok = true;
+    for (int c : hist) if (c != 100) ok = false;
+
+    printf("expected: every bucket exactly 100 (no race possible, one thread)\n");
+    printf("\nself-check: sequential histogram matches expected counts: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 40_histogram_cpu_baseline.cpp -o histogram_cpu_baseline
+./histogram_cpu_baseline
+```
+
+**Sample input:** `N = 1000` elements, round-robin into `NUM_BUCKETS = 10` buckets.
+
+**Sample output:**
+
+```text
+=== Section 7.1 CPU baseline: sequential histogram ===
+
+N = 1000 elements, round-robin into 10 buckets
+
+bucket counts: 100 100 100 100 100 100 100 100 100 100 
+
+expected: every bucket exactly 100 (no race possible, one thread)
+
+self-check: sequential histogram matches expected counts: confirmed
 ```
 
 This is precisely `simulate_atomic_histogram` from the code below, and on a single CPU thread it needs nothing special at all — `hist[b]++` is perfectly correct because there is exactly one thread ever touching `hist`. The entire race this section traces only exists once many GPU threads run this identical line AT THE SAME TIME; the code is not wrong in isolation, the CONCURRENCY is what breaks it.
@@ -240,7 +293,73 @@ Section 7.1 already proved atomicAdd is CORRECT — it never loses an increment.
 
 ### The Sequential (CPU) Baseline
 
-The identical single-thread loop from Section 7.1 is the whole story on a CPU — there is no notion of "per-block" histograms, or any contention to reduce, when only one thread ever increments `hist`. Privatization exists purely to reduce how many GPU threads simultaneously contend for the same small set of global addresses; a sequential CPU histogram has no such contention to begin with.
+The identical single-thread loop from Section 7.1 is the whole story on a CPU — there is no notion of "per-block" histograms, or any contention to reduce, when only one thread ever increments `hist`:
+
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 7.2 -- The Sequential (CPU) Baseline.
+// The identical single-thread loop from Section 7.1 is the whole story
+// on a CPU -- there is no notion of "per-block" histograms, or any
+// contention to reduce, when only one thread ever increments hist.
+
+std::vector<int> histogram_cpu(const std::vector<int>& bucket_of, int num_buckets) {
+    std::vector<int> hist(num_buckets, 0);
+    for (int b : bucket_of) hist[b]++;
+    return hist;
+}
+
+int main() {
+    printf("=== Section 7.2 CPU baseline: sequential histogram, N=2048 ===\n\n");
+
+    const int N = 2048, NUM_BUCKETS = 16;
+    std::vector<int> bucket_of(N);
+    for (int i = 0; i < N; i++) bucket_of[i] = i % NUM_BUCKETS;
+
+    std::vector<int> hist = histogram_cpu(bucket_of, NUM_BUCKETS);
+
+    printf("N = %d elements, round-robin into %d buckets\n\n", N, NUM_BUCKETS);
+    printf("bucket counts: ");
+    for (int c : hist) printf("%d ", c);
+    printf("\n\n");
+
+    bool ok = true;
+    for (int c : hist) if (c != 128) ok = false;
+
+    printf("expected: every bucket exactly 128 -- no privatization needed, no contention\n");
+    printf("to reduce, when only one thread ever touches hist.\n");
+    printf("\nself-check: sequential histogram matches expected counts: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 41_histogram_cpu_baseline_privatized.cpp -o histogram_cpu_baseline_privatized
+./histogram_cpu_baseline_privatized
+```
+
+**Sample input:** `N = 2048` elements, round-robin into `NUM_BUCKETS = 16` buckets — the identical setup the privatized GPU version below uses.
+
+**Sample output:**
+
+```text
+=== Section 7.2 CPU baseline: sequential histogram, N=2048 ===
+
+N = 2048 elements, round-robin into 16 buckets
+
+bucket counts: 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 
+
+expected: every bucket exactly 128 -- no privatization needed, no contention
+to reduce, when only one thread ever touches hist.
+
+self-check: sequential histogram matches expected counts: confirmed
+```
+
+Privatization exists purely to reduce how many GPU threads simultaneously contend for the same small set of global addresses; a sequential CPU histogram has no such contention to begin with.
 
 ### The Concept, In Detail
 
@@ -483,20 +602,81 @@ A histogram tells you how MANY elements belong in each bucket. Chapter 6.2 alrea
 
 The well-known sequential counting sort needs nothing but three ordinary loops:
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 7.3 -- The Sequential (CPU) Baseline.
+// The well-known sequential counting sort needs nothing but three
+// ordinary loops -- no thread ever has to coordinate with any other
+// thread over who gets which output slot, because there IS only one.
+
 std::vector<int> counting_sort_cpu(const std::vector<int>& data, int num_buckets) {
     std::vector<int> hist(num_buckets, 0);
-    for (int v : data) hist[v]++;                          // step 1: count
+    for (int v : data) hist[v]++;
 
     std::vector<int> offsets(num_buckets, 0);
     for (int b = 1; b < num_buckets; b++)
-        offsets[b] = offsets[b - 1] + hist[b - 1];          // step 2: running total = exclusive scan
+        offsets[b] = offsets[b - 1] + hist[b - 1];
 
     std::vector<int> out(data.size());
     std::vector<int> cursor = offsets;
-    for (int v : data) out[cursor[v]++] = v;                // step 3: place, advancing each bucket's cursor
+    for (int v : data) out[cursor[v]++] = v;
     return out;
 }
+
+int main() {
+    printf("=== Section 7.3 CPU baseline: sequential counting sort ===\n\n");
+
+    std::vector<int> data = {3, 1, 3, 0, 2, 1, 3, 0};
+    const int NUM_BUCKETS = 4;
+
+    printf("keys: ");
+    for (int v : data) printf("%d ", v);
+    printf(" (N=8, NUM_BUCKETS=%d)\n\n", NUM_BUCKETS);
+
+    std::vector<int> out = counting_sort_cpu(data, NUM_BUCKETS);
+
+    printf("sorted output: ");
+    for (int v : out) printf("%d ", v);
+    printf("\n\n");
+
+    std::vector<int> expected = {0, 0, 1, 1, 2, 3, 3, 3};
+    bool ok = (out == expected);
+
+    printf("expected: 0 0 1 1 2 3 3 3\n");
+    printf("\nhistogram, running-total offsets, cursor-based scatter -- three ordinary\n");
+    printf("loops, no coordination needed with exactly one thread.\n");
+    printf("\nself-check: sequential counting sort matches expected output: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 42_counting_sort_cpu_baseline.cpp -o counting_sort_cpu_baseline
+./counting_sort_cpu_baseline
+```
+
+**Sample input:** the 8-element key array `[3, 1, 3, 0, 2, 1, 3, 0]`, `NUM_BUCKETS = 4` — the identical small hand-traced example this section's "Concept, In Detail" walks through below.
+
+**Sample output:**
+
+```text
+=== Section 7.3 CPU baseline: sequential counting sort ===
+
+keys: 3 1 3 0 2 1 3 0  (N=8, NUM_BUCKETS=4)
+
+sorted output: 0 0 1 1 2 3 3 3 
+
+expected: 0 0 1 1 2 3 3 3
+
+histogram, running-total offsets, cursor-based scatter -- three ordinary
+loops, no coordination needed with exactly one thread.
+
+self-check: sequential counting sort matches expected output: confirmed
 ```
 
 Computing the offsets is just a running total, and no thread ever has to coordinate with any other thread over who gets which output slot, because there IS only one thread. Section 7.3's GPU version needs Chapter 5's parallel scan to compute those SAME offsets in parallel, and needs atomicAdd to hand out unique positions safely, precisely because many threads now have to agree, at the same instant, on both the running totals and on who writes where.

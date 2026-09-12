@@ -29,11 +29,80 @@ Every atomic operation this book has used so far — `atomicAdd`, in Chapters 7 
 
 On an ordinary single CPU thread — or, equivalently, on a GPU with only ONE thread ever touching the stack — push needs nothing special at all:
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 9.1 -- The Sequential (CPU) Baseline.
+// On a single CPU thread, push needs nothing special at all -- this is
+// completely correct as written, because there is no OTHER thread that
+// could change head in the gap between these two lines.
+
+struct Node { int value; int next; };
+
 void push_cpu(Node* nodes, int& head, int node_idx) {
-    nodes[node_idx].next = head;   // point the new node at whatever is currently on top
-    head = node_idx;               // then make it the new top
+    nodes[node_idx].next = head;
+    head = node_idx;
 }
+
+int main() {
+    printf("=== Section 9.1 CPU baseline: sequential push, no CAS needed ===\n\n");
+
+    std::vector<Node> nodes(4);
+    int head = -1;
+
+    int values[] = {10, 20, 30};
+    for (int i = 0; i < 3; i++) {
+        nodes[i].value = values[i];
+        push_cpu(nodes.data(), head, i);
+        printf("push(%d) -> head is now slot %d\n", values[i], head);
+    }
+
+    printf("\nfinal stack, walked from head: [");
+    std::vector<int> walked;
+    int cur = head;
+    while (cur != -1) { walked.push_back(nodes[cur].value); cur = nodes[cur].next; }
+    for (size_t i = 0; i < walked.size(); i++) printf("%d%s", walked[i], i + 1 < walked.size() ? ", " : "");
+    printf("]\n\n");
+
+    std::vector<int> expected = {30, 20, 10};
+    bool ok = (walked == expected);
+
+    printf("expected (most recently pushed on top): 30, 20, 10\n");
+    printf("\nno atomic operation of any kind -- one thread, two lines, nothing else can\n");
+    printf("ever observe or interleave with them.\n");
+    printf("\nself-check: sequential push produces correct LIFO order: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 46_stack_push_cpu_baseline.cpp -o stack_push_cpu_baseline
+./stack_push_cpu_baseline
+```
+
+**Sample input:** push `10`, then `20`, then `30` onto an initially empty stack, one thread at a time.
+
+**Sample output:**
+
+```text
+=== Section 9.1 CPU baseline: sequential push, no CAS needed ===
+
+push(10) -> head is now slot 0
+push(20) -> head is now slot 1
+push(30) -> head is now slot 2
+
+final stack, walked from head: [30, 20, 10]
+
+expected (most recently pushed on top): 30, 20, 10
+
+no atomic operation of any kind -- one thread, two lines, nothing else can
+ever observe or interleave with them.
+
+self-check: sequential push produces correct LIFO order: confirmed
 ```
 
 This is completely correct as written, because there is no OTHER thread that could change `head` in the gap between these two lines. This is also, line for line, exactly the logic Section 9.1's own `push_naive` kernel below uses — the CODE does not change at all when moving to the GPU. What changes is that the GPU runs many copies of this identical logic AT THE SAME TIME, and it is exactly that — not anything wrong with the code in isolation — which is about to break it.
@@ -299,23 +368,101 @@ Section 9.1 fixed push. Pop has its own version of the identical hazard: read th
 
 On a single CPU thread, both operations are just as unremarkable as Section 9.1's CPU-baseline push — this book's own host-side reference stack implements them exactly this way, with no CAS anywhere:
 
-```
-void push(int value) {
-    int node_idx = next_free++;
-    nodes[node_idx].value = value;
-    int old_head = head;
-    nodes[node_idx].next = old_head;
-    head = node_idx;   // nothing else could have changed `head` in between
-}
+```cpp
+#include <cstdio>
+#include <vector>
 
-bool pop(int* out_value) {
-    int old_head = head;
-    if (old_head == -1) return false;
-    int new_head = nodes[old_head].next;
-    head = new_head;   // safe for the identical reason
-    *out_value = nodes[old_head].value;
-    return true;
+// Chapter 9.2 -- The Sequential (CPU) Baseline.
+// On a single CPU thread, both operations are just as unremarkable as
+// Section 9.1's baseline -- no CAS anywhere, because nothing else could
+// have changed head in between.
+
+struct Node { int value; int next; };
+
+struct Stack {
+    std::vector<Node> nodes;
+    int head = -1;
+    int next_free = 0;
+
+    explicit Stack(int capacity) : nodes(capacity) {}
+
+    void push(int value) {
+        int node_idx = next_free++;
+        nodes[node_idx].value = value;
+        int old_head = head;
+        nodes[node_idx].next = old_head;
+        head = node_idx;
+    }
+
+    bool pop(int* out_value) {
+        int old_head = head;
+        if (old_head == -1) return false;
+        int new_head = nodes[old_head].next;
+        head = new_head;
+        *out_value = nodes[old_head].value;
+        return true;
+    }
+};
+
+int main() {
+    printf("=== Section 9.2 CPU baseline: sequential push/pop, no CAS needed ===\n\n");
+
+    Stack s(8);
+    s.push(10);
+    s.push(20);
+    s.push(30);
+    printf("push(10), push(20), push(30) -> stack is [30, 20, 10] (top to bottom)\n\n");
+
+    int v;
+    std::vector<int> popped;
+
+    s.pop(&v); popped.push_back(v);
+    printf("pop() -> %d\n", v);
+
+    s.push(40);
+    printf("push(40) -> stack is [40, 20, 10]\n");
+
+    s.pop(&v); popped.push_back(v);
+    printf("pop() -> %d\n\n", v);
+
+    std::vector<int> expected = {30, 40};
+    bool ok = (popped == expected);
+
+    printf("expected pops, in order: 30, 40\n");
+    printf("\nevery pop returns exactly the most recently pushed, not-yet-popped value --\n");
+    printf("true LIFO order, with no CAS anywhere.\n");
+    printf("\nself-check: sequential push/pop produces correct LIFO order: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
 }
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 47_stack_push_pop_cpu_baseline.cpp -o stack_push_pop_cpu_baseline
+./stack_push_pop_cpu_baseline
+```
+
+**Sample input:** `push(10)`, `push(20)`, `push(30)`, `pop()`, `push(40)`, `pop()`.
+
+**Sample output:**
+
+```text
+=== Section 9.2 CPU baseline: sequential push/pop, no CAS needed ===
+
+push(10), push(20), push(30) -> stack is [30, 20, 10] (top to bottom)
+
+pop() -> 30
+push(40) -> stack is [40, 20, 10]
+pop() -> 40
+
+expected pops, in order: 30, 40
+
+every pop returns exactly the most recently pushed, not-yet-popped value --
+true LIFO order, with no CAS anywhere.
+
+self-check: sequential push/pop produces correct LIFO order: confirmed
 ```
 
 Every comment in Section 9.1 about why a single thread never needs CAS applies here unchanged, for both operations. The GPU version below keeps this exact shape and adds exactly one thing to each: a CAS retry loop around the final pointer update, so many threads can safely call push and pop at once.
@@ -546,7 +693,102 @@ Section 9.2's CAS retry loop is correct as long as a pointer value ALONE is enou
 
 ### The Sequential (CPU) Baseline
 
-On a single CPU thread doing one pop at a time, `old_head` can never go stale between being read and being used in a CAS — nothing else runs in the gap, because there is no gap: one thread does its LOAD, its COMPUTE, and its CAS with nothing else able to interleave in between. ABA is fundamentally a MULTI-THREAD phenomenon: it requires some OTHER thread's operations to complete entirely inside the gap between one thread's read and that same thread's own, delayed CAS attempt. This is exactly why Sections 9.1 and 9.2's single-thread baselines never needed to worry about it at all, and why the scenario below has to script a specific multi-step interleaving by hand rather than arising from any one thread's code in isolation.
+On a single CPU thread doing one pop at a time, `old_head` can never go stale between being read and being used in a CAS — nothing else runs in the gap, because there is no gap: one thread does its LOAD, its COMPUTE, and its CAS with nothing else able to interleave in between. ABA is fundamentally a MULTI-THREAD phenomenon: it requires some OTHER thread's operations to complete entirely inside the gap between one thread's read and that same thread's own, delayed CAS attempt. This is exactly why Sections 9.1 and 9.2's single-thread baselines never needed to worry about it at all, and why the scenario below has to script a specific multi-step interleaving by hand rather than arising from any one thread's code in isolation. Running the IDENTICAL sequence of operations — two pops, then a push that reuses a freed slot — strictly one at a time, on one thread, with no delayed CAS anywhere, makes the point directly: the slot gets reused, and nothing goes wrong.
+
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 9.3 -- The Sequential (CPU) Baseline.
+// On a single CPU thread doing one pop at a time, old_head can never go
+// stale between being read and being used, because there is no gap --
+// one thread does its LOAD, its COMPUTE, and its update with nothing
+// else able to interleave in between. ABA is fundamentally a
+// MULTI-THREAD phenomenon: running the identical sequence of operations
+// strictly in order, one at a time, never triggers it, even when a slot
+// gets reused.
+
+struct Node { int value; int next; };
+
+struct Stack {
+    std::vector<Node> nodes;
+    int head = -1;
+    int next_free = 0;
+
+    explicit Stack(int capacity) : nodes(capacity) {}
+
+    void push(int value) {
+        int node_idx = next_free++;
+        nodes[node_idx].value = value;
+        nodes[node_idx].next = head;
+        head = node_idx;
+    }
+
+    bool pop(int* out_value) {
+        int old_head = head;
+        if (old_head == -1) return false;
+        head = nodes[old_head].next;
+        *out_value = nodes[old_head].value;
+        return true;
+    }
+};
+
+int main() {
+    printf("=== Section 9.3 CPU baseline: the same sequence, strictly one thread ===\n\n");
+
+    Stack s(4);
+    s.push(10);
+    s.push(20);
+    s.push(30);
+    printf("push(10 -> slot0), push(20 -> slot1), push(30 -> slot2)\n");
+
+    int v;
+    s.pop(&v); printf("pop() -> %d (removes slot2, C)\n", v);
+    s.pop(&v); printf("pop() -> %d (removes slot1, B)\n", v);
+
+    s.push(99);
+    printf("push(99) -> reuses slot0's memory (it is free), head is now slot0 again\n\n");
+
+    s.pop(&v);
+    printf("pop() -> %d (the fresh value 99, not the stale original occupant)\n\n", v);
+
+    bool ok = (v == 99);
+    printf("no CAS, no tag, no ABA check anywhere -- because a single thread reading\n");
+    printf("head immediately before using it can never observe a value that changed\n");
+    printf("and changed back in between; there is no 'in between' at all.\n");
+    printf("\nself-check: sequential single-thread reuse never confuses old and new: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 48_aba_cpu_baseline.cpp -o aba_cpu_baseline
+./aba_cpu_baseline
+```
+
+**Sample input:** `push(10)`, `push(20)`, `push(30)`, `pop()`, `pop()`, `push(99)` (reusing the freed slot), `pop()` — the identical operations Section 9.3's scripted scenario interleaves across threads, run here strictly in order on one.
+
+**Sample output:**
+
+```text
+=== Section 9.3 CPU baseline: the same sequence, strictly one thread ===
+
+push(10 -> slot0), push(20 -> slot1), push(30 -> slot2)
+pop() -> 30 (removes slot2, C)
+pop() -> 20 (removes slot1, B)
+push(99) -> reuses slot0's memory (it is free), head is now slot0 again
+
+pop() -> 99 (the fresh value 99, not the stale original occupant)
+
+no CAS, no tag, no ABA check anywhere -- because a single thread reading
+head immediately before using it can never observe a value that changed
+and changed back in between; there is no 'in between' at all.
+
+self-check: sequential single-thread reuse never confuses old and new: confirmed
+```
 
 Compactly, the specific interleaving that triggers it:
 

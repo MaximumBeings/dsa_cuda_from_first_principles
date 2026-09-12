@@ -25,7 +25,14 @@ An inclusive scan turns `[3, 1, 4, 1, 5]` into `[3, 4, 8, 9, 14]` — each outpu
 
 A CPU computes an inclusive scan with exactly one pass and one running variable:
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 5.1 -- The Sequential (CPU) Baseline.
+// A CPU computes an inclusive scan with exactly one pass and one running
+// variable: O(n) work, not O(n log n), and no notion of "steps" at all.
+
 void scan_inclusive_cpu(const float* in, float* out, int n) {
     float running = 0.0f;
     for (int i = 0; i < n; i++) {
@@ -33,6 +40,53 @@ void scan_inclusive_cpu(const float* in, float* out, int n) {
         out[i] = running;
     }
 }
+
+int main() {
+    printf("=== Section 5.1 CPU baseline: one-pass inclusive scan ===\n\n");
+
+    const int N = 8;
+    std::vector<float> in(N, 1.0f), out(N);
+    scan_inclusive_cpu(in.data(), out.data(), N);
+
+    printf("input (%d elements, all 1.0): ", N);
+    for (int i = 0; i < N; i++) printf("%.0f ", in[i]);
+    printf("\n\n");
+
+    printf("inclusive scan output: ");
+    for (int i = 0; i < N; i++) printf("%.0f ", out[i]);
+    printf("\n\n");
+
+    bool ok = true;
+    for (int i = 0; i < N; i++) if (out[i] != (float)(i + 1)) ok = false;
+
+    printf("expected (running total i+1 at each position): 1 2 3 4 5 6 7 8\n");
+    printf("\nself-check: one-pass scan matches expected running totals: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 34_scan_inclusive_cpu_baseline.cpp -o scan_inclusive_cpu_baseline
+./scan_inclusive_cpu_baseline
+```
+
+**Sample input:** an 8-element array, all `1.0`.
+
+**Sample output:**
+
+```text
+=== Section 5.1 CPU baseline: one-pass inclusive scan ===
+
+input (8 elements, all 1.0): 1 1 1 1 1 1 1 1 
+
+inclusive scan output: 1 2 3 4 5 6 7 8 
+
+expected (running total i+1 at each position): 1 2 3 4 5 6 7 8
+
+self-check: one-pass scan matches expected running totals: confirmed
 ```
 
 O(n) work, not O(n log n), and no notion of "steps" or double-buffering at all, because each position's answer is trivially available the moment the position before it has been processed. The GPU version below needs `log2(n)` STEPS and touches nearly every position at EACH step specifically because no single GPU thread can see every earlier position's running total the way one sequential loop naturally can — the extra work is the price of turning one sequential dependency chain into something many threads can execute at once.
@@ -226,7 +280,16 @@ Section 5.1's O(n log n) work comes from touching nearly every position at every
 
 The exclusive version is the identical one-pass CPU loop as Section 5.1's baseline, just writing the running total BEFORE adding the current element instead of after:
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 5.2 -- The Sequential (CPU) Baseline.
+// The exclusive version is the identical one-pass loop as Section 5.1's
+// baseline, just writing the running total BEFORE adding the current
+// element instead of after. Still O(n) work, still no up-sweep or
+// down-sweep of any kind.
+
 void scan_exclusive_cpu(const float* in, float* out, int n) {
     float running = 0.0f;
     for (int i = 0; i < n; i++) {
@@ -234,6 +297,53 @@ void scan_exclusive_cpu(const float* in, float* out, int n) {
         running += in[i];
     }
 }
+
+int main() {
+    printf("=== Section 5.2 CPU baseline: one-pass exclusive scan ===\n\n");
+
+    const int N = 8;
+    std::vector<float> in(N, 1.0f), out(N);
+    scan_exclusive_cpu(in.data(), out.data(), N);
+
+    printf("input (%d elements, all 1.0): ", N);
+    for (int i = 0; i < N; i++) printf("%.0f ", in[i]);
+    printf("\n\n");
+
+    printf("exclusive scan output: ");
+    for (int i = 0; i < N; i++) printf("%.0f ", out[i]);
+    printf("\n\n");
+
+    bool ok = true;
+    for (int i = 0; i < N; i++) if (out[i] != (float)i) ok = false;
+
+    printf("expected (running total of everything strictly before i): 0 1 2 3 4 5 6 7\n");
+    printf("\nself-check: one-pass scan matches expected running totals: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 35_scan_exclusive_cpu_baseline.cpp -o scan_exclusive_cpu_baseline
+./scan_exclusive_cpu_baseline
+```
+
+**Sample input:** an 8-element array, all `1.0`.
+
+**Sample output:**
+
+```text
+=== Section 5.2 CPU baseline: one-pass exclusive scan ===
+
+input (8 elements, all 1.0): 1 1 1 1 1 1 1 1 
+
+exclusive scan output: 0 1 2 3 4 5 6 7 
+
+expected (running total of everything strictly before i): 0 1 2 3 4 5 6 7
+
+self-check: one-pass scan matches expected running totals: confirmed
 ```
 
 Still O(n) work, still no up-sweep or down-sweep of any kind. Blelloch's two-sweep tree exists purely to recover this same O(n) work bound in a form that many GPU threads can execute in O(log n) steps; a single CPU thread never needed a tree to begin with, since it already gets O(n) work for free from one straightforward loop.
@@ -482,7 +592,86 @@ Sections 5.1 and 5.2 scanned exactly one block. A real scan needs `N` far larger
 
 ### The Sequential (CPU) Baseline
 
-Exactly like Chapter 4.3, the single-pass CPU loop from Section 5.2 handles `N = 2048` (or any larger `N`) without modification — a CPU scan never needs to know about "blocks" at all. This section's three-kernel design (local scan, scan-of-totals, offset-broadcast) exists entirely to work around a single GPU block's limited shared memory and thread count; it recovers the identical answer the one-line CPU loop already computes trivially, just structured so many blocks can each do a bounded piece of the work.
+Exactly like Chapter 4.3, the single-pass CPU loop from Section 5.2 handles `N = 2048` (or any larger `N`) without modification — a CPU scan never needs to know about "blocks" at all:
+
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 5.3 -- The Sequential (CPU) Baseline.
+// Exactly like Chapter 4.3, the single-pass loop from Section 5.2
+// handles N=2048 (or any larger N) without modification -- a CPU scan
+// never needs to know about "blocks" at all.
+
+void scan_exclusive_cpu(const float* in, float* out, int n) {
+    float running = 0.0f;
+    for (int i = 0; i < n; i++) {
+        out[i] = running;
+        running += in[i];
+    }
+}
+
+int main() {
+    printf("=== Section 5.3 CPU baseline: one-pass exclusive scan, N=2048 ===\n\n");
+
+    const int N = 2048;
+    std::vector<float> in(N), out(N);
+    for (int i = 0; i < N; i++) in[i] = (float)((i % 13) + 1);
+
+    scan_exclusive_cpu(in.data(), out.data(), N);
+
+    printf("N = %d elements, values (i %% 13) + 1\n\n", N);
+    printf("first 5 outputs:  ");
+    for (int i = 0; i < 5; i++) printf("%.0f ", out[i]);
+    printf("\nlast 5 outputs:   ");
+    for (int i = N - 5; i < N; i++) printf("%.0f ", out[i]);
+    printf("\n\n");
+
+    float total = out[N - 1] + in[N - 1];
+    double ref = 0.0;
+    for (int i = 0; i < N; i++) ref += in[i];
+
+    printf("grand total recovered from scan (out[N-1] + in[N-1]): %.1f\n", total);
+    printf("independent reference sum:                             %.1f\n", ref);
+    bool ok = (total == (float)ref);
+
+    printf("\nno blocks, no per-block totals, no offset broadcast -- one loop handles all\n");
+    printf("2048 elements exactly as easily as Section 5.2's 8.\n");
+    printf("\nself-check: one-pass scan's recovered total matches reference: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 36_scan_exclusive_cpu_baseline_multiblock.cpp -o scan_exclusive_cpu_baseline_multiblock
+./scan_exclusive_cpu_baseline_multiblock
+```
+
+**Sample input:** `N = 2048` elements, values `(i % 13) + 1` — the identical values the multi-block GPU version below uses.
+
+**Sample output:**
+
+```text
+=== Section 5.3 CPU baseline: one-pass exclusive scan, N=2048 ===
+
+N = 2048 elements, values (i % 13) + 1
+
+first 5 outputs:  0 1 3 6 10 
+last 5 outputs:   14290 14293 14297 14302 14308 
+
+grand total recovered from scan (out[N-1] + in[N-1]): 14315.0
+independent reference sum:                             14315.0
+
+no blocks, no per-block totals, no offset broadcast -- one loop handles all
+2048 elements exactly as easily as Section 5.2's 8.
+
+self-check: one-pass scan's recovered total matches reference: confirmed
+```
+
+This section's three-kernel design (local scan, scan-of-totals, offset-broadcast) exists entirely to work around a single GPU block's limited shared memory and thread count; it recovers the identical answer the one-line CPU loop already computes trivially, just structured so many blocks can each do a bounded piece of the work.
 
 ### The Concept, In Detail
 

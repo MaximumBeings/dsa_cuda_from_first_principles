@@ -23,14 +23,73 @@ Chapter 6 computed every kept element's output slot with an exclusive scan, guar
 
 ### The Sequential (CPU) Baseline
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 8.1 -- The Sequential (CPU) Baseline.
+// push_back on a CPU already IS a safe, unique slot reservation, because
+// only one thread ever calls it -- no possibility of two calls claiming
+// the same slot.
+
 std::vector<int> append_cpu(const std::vector<int>& data) {
     std::vector<int> out;
     for (int v : data) {
-        if (v % 3 == 0) out.push_back(v);   // one thread; no reservation needed at all
+        if (v % 3 == 0) out.push_back(v);
     }
     return out;
 }
+
+int main() {
+    printf("=== Section 8.1 CPU baseline: sequential append via push_back ===\n\n");
+
+    std::vector<int> data = {0, 1, 2, 3, 4, 5, 6, 7};
+    printf("input: ");
+    for (int v : data) printf("%d ", v);
+    printf("\npredicate: multiple of 3\n\n");
+
+    std::vector<int> out = append_cpu(data);
+    printf("appended output: ");
+    for (int v : out) printf("%d ", v);
+    printf("\n\n");
+
+    std::vector<int> expected = {0, 3, 6};
+    bool ok = (out == expected);
+
+    printf("expected: 0 3 6\n");
+    printf("\nno atomic reservation needed at all -- one thread, one push_back call at a\n");
+    printf("time, never two calls racing for the same slot.\n");
+    printf("\nself-check: sequential append matches expected output: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 43_append_cpu_baseline.cpp -o append_cpu_baseline
+./append_cpu_baseline
+```
+
+**Sample input:** the 8-element array `0, 1, 2, ..., 7`, predicate = "multiple of 3."
+
+**Sample output:**
+
+```text
+=== Section 8.1 CPU baseline: sequential append via push_back ===
+
+input: 0 1 2 3 4 5 6 7 
+predicate: multiple of 3
+
+appended output: 0 3 6 
+
+expected: 0 3 6
+
+no atomic reservation needed at all -- one thread, one push_back call at a
+time, never two calls racing for the same slot.
+
+self-check: sequential append matches expected output: confirmed
 ```
 
 `push_back` on a CPU already IS a safe, unique slot reservation, because only one thread ever calls it — there is no possibility of two calls claiming the same slot. Section 8.1's atomicAdd-based reservation exists to give many GPU threads that exact same guarantee (a unique slot, never double-claimed) when they all want to append at once, which is a problem a single CPU thread never has.
@@ -227,14 +286,71 @@ Section 8.1's `atomicAdd`-based reservation is correct because `atomicAdd` is a 
 
 ### The Sequential (CPU) Baseline
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 8.2 -- The Sequential (CPU) Baseline.
+// std::vector grows itself automatically, safely, because only one
+// thread is ever calling push_back -- exactly the "check size, grow if
+// needed, then write" pattern the GPU version is about to show breaking
+// under concurrency.
+
 std::vector<int> grow_cpu(int count) {
-    std::vector<int> buffer;             // std::vector grows itself automatically, safely,
-    for (int i = 0; i < count; i++) {    // because only one thread is ever calling push_back
+    std::vector<int> buffer;
+    for (int i = 0; i < count; i++) {
         buffer.push_back(i);
     }
     return buffer;
 }
+
+int main() {
+    printf("=== Section 8.2 CPU baseline: sequential self-growing buffer ===\n\n");
+
+    const int COUNT = 10;
+    std::vector<int> buffer = grow_cpu(COUNT);
+
+    printf("requested count: %d\n\n", COUNT);
+    printf("buffer: ");
+    for (int v : buffer) printf("%d ", v);
+    printf("\nfinal size: %zu\n\n", buffer.size());
+
+    bool ok = ((int)buffer.size() == COUNT);
+    for (int i = 0; i < COUNT && ok; i++) if (buffer[i] != i) ok = false;
+
+    printf("completely safe with one thread -- no gap for another thread's write to\n");
+    printf("land between a size check and a grow-then-write, because there is no other\n");
+    printf("thread.\n");
+    printf("\nself-check: sequential growable buffer matches expected contents: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 44_grow_cpu_baseline.cpp -o grow_cpu_baseline
+./grow_cpu_baseline
+```
+
+**Sample input:** `count = 10` — grow a buffer from empty to 10 elements, one `push_back` at a time.
+
+**Sample output:**
+
+```text
+=== Section 8.2 CPU baseline: sequential self-growing buffer ===
+
+requested count: 10
+
+buffer: 0 1 2 3 4 5 6 7 8 9 
+final size: 10
+
+completely safe with one thread -- no gap for another thread's write to
+land between a size check and a grow-then-write, because there is no other
+thread.
+
+self-check: sequential growable buffer matches expected contents: confirmed
 ```
 
 `std::vector::push_back` already does exactly the "check size, grow if needed, then write" pattern this section is about to show breaking — and on a CPU, with one thread, it is completely safe, which is exactly why it is most programmers' first instinct to reach for the same idea on a GPU. This section shows precisely what goes wrong the moment many threads try to run that same, otherwise-correct-looking pattern at once.
@@ -486,14 +602,86 @@ Section 8.2's two-pass fix is the right answer whenever a second full pass over 
 
 ### The Sequential (CPU) Baseline
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 8.3 -- The Sequential (CPU) Baseline.
+// On a CPU, checking the size before writing is completely safe with one
+// thread -- there is no gap for another thread's write to land in
+// between the check and the append.
+
 int bounded_append_cpu(std::vector<int>& buffer, int value, int capacity) {
     if ((int)buffer.size() < capacity) {
         buffer.push_back(value);
-        return (int)buffer.size() - 1;   // the slot just filled
+        return (int)buffer.size() - 1;
     }
-    return -1;   // over capacity -- caller can detect and react
+    return -1;
 }
+
+int main() {
+    printf("=== Section 8.3 CPU baseline: sequential bounded append ===\n\n");
+
+    const int CAPACITY = 5;
+    std::vector<int> data = {10, 20, 30, 40, 50, 60, 70, 80};
+    std::vector<int> buffer;
+    int accepted = 0, rejected = 0;
+
+    printf("capacity: %d, attempting to append %zu values\n\n", CAPACITY, data.size());
+
+    for (int v : data) {
+        int slot = bounded_append_cpu(buffer, v, CAPACITY);
+        printf("append(%d) -> %s\n", v, slot >= 0 ? "accepted" : "REJECTED (over capacity)");
+        if (slot >= 0) accepted++; else rejected++;
+    }
+
+    printf("\nfinal buffer: ");
+    for (int v : buffer) printf("%d ", v);
+    printf("\naccepted: %d, rejected: %d\n\n", accepted, rejected);
+
+    bool ok = (accepted == CAPACITY) && (rejected == (int)data.size() - CAPACITY)
+              && ((int)buffer.size() == CAPACITY);
+
+    printf("no race possible -- the size check and the append happen with nothing else\n");
+    printf("able to run in between, with exactly one thread.\n");
+    printf("\nself-check: sequential bounded append matches expected accept/reject counts: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 45_bounded_append_cpu_baseline.cpp -o bounded_append_cpu_baseline
+./bounded_append_cpu_baseline
+```
+
+**Sample input:** 8 values `10, 20, ..., 80`, fixed `capacity = 5`.
+
+**Sample output:**
+
+```text
+=== Section 8.3 CPU baseline: sequential bounded append ===
+
+capacity: 5, attempting to append 8 values
+
+append(10) -> accepted
+append(20) -> accepted
+append(30) -> accepted
+append(40) -> accepted
+append(50) -> accepted
+append(60) -> REJECTED (over capacity)
+append(70) -> REJECTED (over capacity)
+append(80) -> REJECTED (over capacity)
+
+final buffer: 10 20 30 40 50 
+accepted: 5, rejected: 3
+
+no race possible -- the size check and the append happen with nothing else
+able to run in between, with exactly one thread.
+
+self-check: sequential bounded append matches expected accept/reject counts: confirmed
 ```
 
 On a CPU, checking the size before writing is completely safe with one thread — there is no gap for another thread's write to land in between the check and the append. Section 8.3's atomicAdd-based version exists to give many GPU threads that identical guarantee: a correct, race-free count of true demand and a correctly bounded set of writes, even when the check-then-write pattern above is being executed by many threads simultaneously instead of just one.

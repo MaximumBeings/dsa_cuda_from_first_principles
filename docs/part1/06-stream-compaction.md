@@ -24,7 +24,15 @@ Filtering `[0, 1, 2, 3, 4, 5, 6]` down to multiples of 3 should produce `[0, 3, 
 
 A CPU compacts an array with one loop and one growable output list:
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 6.1 -- The Sequential (CPU) Baseline.
+// A CPU compacts an array with one loop and one growable output list --
+// no flags, no scan, no separate scatter step, because a single thread
+// can just decide, one element at a time, whether to append.
+
 std::vector<int> compact_cpu(const std::vector<int>& data) {
     std::vector<int> out;
     for (int v : data) {
@@ -32,6 +40,52 @@ std::vector<int> compact_cpu(const std::vector<int>& data) {
     }
     return out;
 }
+
+int main() {
+    printf("=== Section 6.1 CPU baseline: one-loop compaction ===\n\n");
+
+    std::vector<int> data = {0, 1, 2, 3, 4, 5, 6, 7};
+    printf("input: ");
+    for (int v : data) printf("%d ", v);
+    printf("\npredicate: multiple of 3\n\n");
+
+    std::vector<int> out = compact_cpu(data);
+    printf("compacted output: ");
+    for (int v : out) printf("%d ", v);
+    printf("\n\n");
+
+    std::vector<int> expected = {0, 3, 6};
+    bool ok = (out == expected);
+
+    printf("expected: 0 3 6\n");
+    printf("\nself-check: one-loop compaction matches expected output: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 37_compact_cpu_baseline.cpp -o compact_cpu_baseline
+./compact_cpu_baseline
+```
+
+**Sample input:** the 8-element array `0, 1, 2, ..., 7`, predicate = "multiple of 3."
+
+**Sample output:**
+
+```text
+=== Section 6.1 CPU baseline: one-loop compaction ===
+
+input: 0 1 2 3 4 5 6 7 
+predicate: multiple of 3
+
+compacted output: 0 3 6 
+
+expected: 0 3 6
+
+self-check: one-loop compaction matches expected output: confirmed
 ```
 
 No flags, no scan, no separate scatter step, because a single thread can just decide, one element at a time, whether to append. Section 6.1's flag-scan-scatter recipe exists because a GPU kernel's many threads cannot take turns appending to a growable list one at a time; they need to know their own output position in advance, all at once, which is exactly what the exclusive scan computes.
@@ -261,7 +315,78 @@ Section 6.1 compacted one block. A real compaction needs `N` larger than that, a
 
 ### The Sequential (CPU) Baseline
 
-The identical one-loop CPU compaction from Section 6.1 handles any `N`, including 2048, without changes — appending to a growable list has no notion of "blocks" to begin with. This section's three-kernel design exists purely to combine per-block results correctly once the input is too large for one block's shared memory, recovering the same answer the CPU's single loop already produces directly.
+The identical one-loop CPU compaction from Section 6.1 handles any `N`, including 2048, without changes — appending to a growable list has no notion of "blocks" to begin with:
+
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 6.2 -- The Sequential (CPU) Baseline.
+// The identical one-loop compaction from Section 6.1 handles any N,
+// including 2048, without changes -- appending to a growable list has
+// no notion of "blocks" to begin with.
+
+std::vector<int> compact_cpu(const std::vector<int>& data) {
+    std::vector<int> out;
+    for (int v : data) {
+        if (v % 3 == 0) out.push_back(v);
+    }
+    return out;
+}
+
+int main() {
+    printf("=== Section 6.2 CPU baseline: one-loop compaction, N=2048 ===\n\n");
+
+    const int N = 2048;
+    std::vector<int> data(N);
+    for (int i = 0; i < N; i++) data[i] = i;
+
+    std::vector<int> out = compact_cpu(data);
+
+    printf("N = %d elements (0..%d), predicate: multiple of 3\n\n", N, N - 1);
+    printf("kept count: %zu\n", out.size());
+    printf("first 5 kept: ");
+    for (int i = 0; i < 5; i++) printf("%d ", out[i]);
+    printf("\nlast 5 kept:  ");
+    for (size_t i = out.size() - 5; i < out.size(); i++) printf("%d ", out[i]);
+    printf("\n\n");
+
+    bool ok = (out.size() == 683);
+    printf("no blocks, no per-block counts, no offset stitching -- one loop handles all\n");
+    printf("2048 elements exactly as easily as Section 6.1's 8.\n");
+    printf("\nself-check: one-loop compaction kept count matches expected 683: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 38_compact_cpu_baseline_multiblock.cpp -o compact_cpu_baseline_multiblock
+./compact_cpu_baseline_multiblock
+```
+
+**Sample input:** `N = 2048` elements, values `0, 1, ..., 2047`, same "multiple of 3" predicate.
+
+**Sample output:**
+
+```text
+=== Section 6.2 CPU baseline: one-loop compaction, N=2048 ===
+
+N = 2048 elements (0..2047), predicate: multiple of 3
+
+kept count: 683
+first 5 kept: 0 3 6 9 12 
+last 5 kept:  2034 2037 2040 2043 2046 
+
+no blocks, no per-block counts, no offset stitching -- one loop handles all
+2048 elements exactly as easily as Section 6.1's 8.
+
+self-check: one-loop compaction kept count matches expected 683: confirmed
+```
+
+This section's three-kernel design exists purely to combine per-block results correctly once the input is too large for one block's shared memory, recovering the same answer the CPU's single loop already produces directly.
 
 ### The Concept, In Detail
 
@@ -594,7 +719,15 @@ Sections 6.1 and 6.2 discarded elements that failed the predicate. A stable PART
 
 A CPU partitions into two ordered groups with one loop and two growable output lists:
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 6.3 -- The Sequential (CPU) Baseline.
+// A CPU partitions into two ordered groups with one loop and two
+// growable output lists. Both groups fall out naturally in their
+// original relative order.
+
 void partition_cpu(const std::vector<int>& data,
                     std::vector<int>& kept, std::vector<int>& discarded) {
     for (int v : data) {
@@ -602,6 +735,65 @@ void partition_cpu(const std::vector<int>& data,
         else discarded.push_back(v);
     }
 }
+
+int main() {
+    printf("=== Section 6.3 CPU baseline: one-loop stable partition ===\n\n");
+
+    std::vector<int> data = {0, 1, 2, 3, 4, 5, 6, 7};
+    printf("input: ");
+    for (int v : data) printf("%d ", v);
+    printf("\npredicate: multiple of 3\n\n");
+
+    std::vector<int> kept, discarded;
+    partition_cpu(data, kept, discarded);
+
+    printf("kept:      ");
+    for (int v : kept) printf("%d ", v);
+    printf("\ndiscarded: ");
+    for (int v : discarded) printf("%d ", v);
+    printf("\n\n");
+
+    std::vector<int> exp_kept = {0, 3, 6};
+    std::vector<int> exp_discarded = {1, 2, 4, 5, 7};
+    bool ok = (kept == exp_kept) && (discarded == exp_discarded);
+
+    printf("expected kept:      0 3 6\n");
+    printf("expected discarded: 1 2 4 5 7\n");
+    printf("\nboth groups fall out already in original relative order -- no scan needed,\n");
+    printf("because a single thread appends to one list or the other as it goes.\n");
+    printf("\nself-check: one-loop partition matches expected groups: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 39_partition_cpu_baseline.cpp -o partition_cpu_baseline
+./partition_cpu_baseline
+```
+
+**Sample input:** the 8-element array `0, 1, 2, ..., 7`, predicate = "multiple of 3."
+
+**Sample output:**
+
+```text
+=== Section 6.3 CPU baseline: one-loop stable partition ===
+
+input: 0 1 2 3 4 5 6 7 
+predicate: multiple of 3
+
+kept:      0 3 6 
+discarded: 1 2 4 5 7 
+
+expected kept:      0 3 6
+expected discarded: 1 2 4 5 7
+
+both groups fall out already in original relative order -- no scan needed,
+because a single thread appends to one list or the other as it goes.
+
+self-check: one-loop partition matches expected groups: confirmed
 ```
 
 Both groups fall out naturally in their original relative order, since each element is appended to one list or the other the moment it is visited, in order. Section 6.3's two separate scans (one per group) exist because a GPU kernel's threads must all learn their own output positions in advance and in parallel; a single CPU thread never needed to solve that problem, since it can simply keep two lists and append to whichever one applies as it goes.

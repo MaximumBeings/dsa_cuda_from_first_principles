@@ -24,12 +24,64 @@ Chapter 3's tree reduction combined adjacent pairs, then adjacent pairs of those
 
 On a CPU, reduction is nothing but one loop:
 
-```
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 4.1 -- The Sequential (CPU) Baseline.
+// On a single CPU thread, reduction is nothing but one loop: one running
+// variable, O(n) work, and no notion of "warps" or "divergence" at all,
+// because there is only ever one thread doing the adding.
+
 float reduce_cpu(const float* data, int n) {
     float sum = 0.0f;
     for (int i = 0; i < n; i++) sum += data[i];
     return sum;
 }
+
+int main() {
+    printf("=== Section 4.1 CPU baseline: sequential reduction ===\n\n");
+
+    const int N = 10;
+    std::vector<float> data(N);
+    for (int i = 0; i < N; i++) data[i] = (float)i;
+
+    printf("input (%d elements): ", N);
+    for (int i = 0; i < N; i++) printf("%.0f ", data[i]);
+    printf("\n\n");
+
+    float sum = reduce_cpu(data.data(), N);
+    float expected = (float)(N * (N - 1) / 2);
+    bool ok = (sum == expected);
+
+    printf("reduce_cpu sum: %.1f\n", sum);
+    printf("expected (closed form n*(n-1)/2): %.1f\n", expected);
+    printf("\nself-check: sequential reduction matches closed-form sum: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 31_reduce_cpu_baseline.cpp -o reduce_cpu_baseline
+./reduce_cpu_baseline
+```
+
+**Sample input:** a 10-element array, values `0, 1, 2, ..., 9`.
+
+**Sample output:**
+
+```text
+=== Section 4.1 CPU baseline: sequential reduction ===
+
+input (10 elements): 0 1 2 3 4 5 6 7 8 9 
+
+reduce_cpu sum: 45.0
+expected (closed form n*(n-1)/2): 45.0
+
+self-check: sequential reduction matches closed-form sum: confirmed
 ```
 
 O(n) work, one running variable, no notion of "warps" or "divergence" at all, because there is only ever one thread doing the adding. Warp divergence is not a cost this loop could ever pay — it is a cost that only appears once the identical reduction is rewritten to run across many threads at once, which is exactly what the rest of this section does.
@@ -256,7 +308,77 @@ Section 4.1's divergence problem is not that too many threads participate — it
 
 ### The Sequential (CPU) Baseline
 
-The CPU baseline is unchanged from Section 4.1 — the identical one-loop function above computes the identical sum with the identical O(n) work, regardless of which GPU index test this section is about to change. What Section 4.2 improves is entirely a property of how the GPU version divides its work across warps; the sequential version never had that property to begin with, which is exactly why the fix belongs entirely on the GPU side.
+The CPU baseline is unchanged from Section 4.1 — the identical one-loop function computes the identical sum with the identical O(n) work, regardless of which GPU index test this section is about to change:
+
+```cpp
+#include <cstdio>
+#include <vector>
+
+// Chapter 4.2 -- The Sequential (CPU) Baseline.
+// Unchanged from Section 4.1: the identical one-loop reduce_cpu computes
+// the identical sum with the identical O(n) work, regardless of which
+// GPU index test Section 4.2 is about to change. Demonstrated here on a
+// differently-sized array purely to show the function does not care.
+
+float reduce_cpu(const float* data, int n) {
+    float sum = 0.0f;
+    for (int i = 0; i < n; i++) sum += data[i];
+    return sum;
+}
+
+int main() {
+    printf("=== Section 4.2 CPU baseline: the identical reduce_cpu, unchanged ===\n\n");
+
+    const int N = 16;
+    std::vector<float> data(N);
+    for (int i = 0; i < N; i++) data[i] = (float)i;
+
+    printf("input (%d elements): ", N);
+    for (int i = 0; i < N; i++) printf("%.0f ", data[i]);
+    printf("\n\n");
+
+    float sum = reduce_cpu(data.data(), N);
+    float expected = (float)(N * (N - 1) / 2);
+    bool ok = (sum == expected);
+
+    printf("reduce_cpu sum: %.1f\n", sum);
+    printf("expected (closed form n*(n-1)/2): %.1f\n", expected);
+    printf("\nsame function, a different N -- nothing about this loop changes when the\n");
+    printf("GPU kernel's index test changes in Section 4.2, because a CPU reduction\n");
+    printf("never had warps or divergence to begin with.\n");
+    printf("\nself-check: sequential reduction matches closed-form sum: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 32_reduce_cpu_baseline_unchanged.cpp -o reduce_cpu_baseline_unchanged
+./reduce_cpu_baseline_unchanged
+```
+
+**Sample input:** a 16-element array, values `0, 1, 2, ..., 15` — a different size from Section 4.1's, purely to demonstrate the function does not care.
+
+**Sample output:**
+
+```text
+=== Section 4.2 CPU baseline: the identical reduce_cpu, unchanged ===
+
+input (16 elements): 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+
+reduce_cpu sum: 120.0
+expected (closed form n*(n-1)/2): 120.0
+
+same function, a different N -- nothing about this loop changes when the
+GPU kernel's index test changes in Section 4.2, because a CPU reduction
+never had warps or divergence to begin with.
+
+self-check: sequential reduction matches closed-form sum: confirmed
+```
+
+What Section 4.2 improves is entirely a property of how the GPU version divides its work across warps; the sequential version never had that property to begin with, which is exactly why the fix belongs entirely on the GPU side.
 
 ### The Concept, In Detail
 
@@ -465,7 +587,77 @@ Sections 4.1 and 4.2 reduced exactly 256 elements — one block's worth. A real 
 
 ### The Sequential (CPU) Baseline
 
-The identical single loop from Section 4.1 handles `N = 100,000` exactly as easily as `N = 256` — a CPU loop does not care how large `N` is, it simply iterates more times. There is no CPU equivalent of this section's two-phase, two-kernel design at all: splitting the work across blocks, giving each block its own shared-memory tile, and combining partial sums with a second launch are all concessions to how a GPU's shared memory and grid dimensions work, not anything a sequential reduction ever needs.
+The identical single loop from Section 4.1 handles `N = 100,000` exactly as easily as `N = 256` — a CPU loop does not care how large `N` is, it simply iterates more times:
+
+```cpp
+#include <cstdio>
+#include <cmath>
+#include <vector>
+
+// Chapter 4.3 -- The Sequential (CPU) Baseline.
+// The identical single loop from Section 4.1 handles N=100,000 exactly
+// as easily as N=256 -- a CPU loop does not care how large N is, it
+// simply iterates more times. There is no CPU equivalent of the GPU
+// version's two-phase, two-kernel design at all.
+
+float reduce_cpu(const float* data, int n) {
+    float sum = 0.0f;
+    for (int i = 0; i < n; i++) sum += data[i];
+    return sum;
+}
+
+int main() {
+    printf("=== Section 4.3 CPU baseline: one loop, no phases, N=100000 ===\n\n");
+
+    const int N = 100000;
+    std::vector<float> data(N);
+    for (int i = 0; i < N; i++) data[i] = (float)((i % 97) + 1);
+
+    double ref = 0.0;
+    for (int i = 0; i < N; i++) ref += data[i];
+
+    float sum = reduce_cpu(data.data(), N);
+    bool ok = (std::fabs((double)sum - ref) < 1.0);
+
+    printf("N = %d elements, values (i %% 97) + 1\n\n", N);
+    printf("reduce_cpu sum (float):        %.4f\n", sum);
+    printf("independent reference (double): %.4f\n", ref);
+    printf("match within floating-point tolerance: %s\n\n", ok ? "yes" : "NO -- BUG");
+    printf("one loop, one running variable -- no blocks, no phases, no launch boundary,\n");
+    printf("regardless of whether N is 256 or 100,000.\n");
+    printf("\nself-check: sequential reduction matches independent reference: %s\n",
+           ok ? "confirmed" : "MISMATCH");
+    return ok ? 0 : 1;
+}
+```
+
+**Compile and run:**
+
+```bash
+g++ -std=c++17 -Wall -Wextra -O2 33_reduce_cpu_baseline_multiblock.cpp -o reduce_cpu_baseline_multiblock
+./reduce_cpu_baseline_multiblock
+```
+
+**Sample input:** `N = 100000` elements, values `(i % 97) + 1` — the identical values the two-phase GPU version below uses.
+
+**Sample output:**
+
+```text
+=== Section 4.3 CPU baseline: one loop, no phases, N=100000 ===
+
+N = 100000 elements, values (i % 97) + 1
+
+reduce_cpu sum (float):        4899685.0000
+independent reference (double): 4899685.0000
+match within floating-point tolerance: yes
+
+one loop, one running variable -- no blocks, no phases, no launch boundary,
+regardless of whether N is 256 or 100,000.
+
+self-check: sequential reduction matches independent reference: confirmed
+```
+
+There is no CPU equivalent of this section's two-phase, two-kernel design at all: splitting the work across blocks, giving each block its own shared-memory tile, and combining partial sums with a second launch are all concessions to how a GPU's shared memory and grid dimensions work, not anything a sequential reduction ever needs.
 
 ### The Concept, In Detail
 
