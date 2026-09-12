@@ -64,6 +64,7 @@ nav:
       - "3. Work, Span, and Complexity on a Parallel Machine": part0/03-work-span-and-complexity.md
   - "Part 1 — Parallel Primitives":
       - "4. Reduction, For Real": part1/04-reduction.md
+      - "5. Scan (Prefix Sum)": part1/05-scan.md
 
 extra:
   social: []
