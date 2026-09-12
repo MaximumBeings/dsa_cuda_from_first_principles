@@ -20,6 +20,22 @@ Reduction (Chapter 4) answers "what is the total." Scan (Chapter 5) answers "wha
 
 Filtering `[0, 1, 2, 3, 4, 5, 6]` down to multiples of 3 should produce `[0, 3, 6]`, in that same relative order. A sequential pass does this with one running output index, incrementing it each time an element is kept. The parallel version needs to know, for every kept element, how many OTHER kept elements come before it — which is exactly what an exclusive scan of a "was this element kept" flag array computes.
 
+### The Sequential (CPU) Baseline
+
+A CPU compacts an array with one loop and one growable output list:
+
+```
+std::vector<int> compact_cpu(const std::vector<int>& data) {
+    std::vector<int> out;
+    for (int v : data) {
+        if (v % 3 == 0) out.push_back(v);
+    }
+    return out;
+}
+```
+
+No flags, no scan, no separate scatter step, because a single thread can just decide, one element at a time, whether to append. Section 6.1's flag-scan-scatter recipe exists because a GPU kernel's many threads cannot take turns appending to a growable list one at a time; they need to know their own output position in advance, all at once, which is exactly what the exclusive scan computes.
+
 ### The Concept, In Detail
 
 Three steps, traced by hand on a small 8-element example (predicate: multiple of 3):
@@ -242,6 +258,10 @@ self-check: compaction correct, count = 86 multiples of 3 in [0,255]: confirmed
 ### Intuition
 
 Section 6.1 compacted one block. A real compaction needs `N` larger than that, and the combination step across blocks looks exactly like Chapter 5.3's multi-block scan for the same underlying reason: each block CAN compact its own segment correctly in isolation, but every block's kept elements then need shifting by how many elements every earlier block kept — an exclusive scan of per-block kept-COUNTS, rather than per-block sums, but otherwise the identical pattern.
+
+### The Sequential (CPU) Baseline
+
+The identical one-loop CPU compaction from Section 6.1 handles any `N`, including 2048, without changes — appending to a growable list has no notion of "blocks" to begin with. This section's three-kernel design exists purely to combine per-block results correctly once the input is too large for one block's shared memory, recovering the same answer the CPU's single loop already produces directly.
 
 ### The Concept, In Detail
 
@@ -569,6 +589,22 @@ all 683 kept elements: confirmed
 ### Intuition
 
 Sections 6.1 and 6.2 discarded elements that failed the predicate. A stable PARTITION keeps everything instead, splitting the array into two groups: elements that pass the predicate, in their original order, followed by elements that fail it, also in their original order. This is not a new algorithm — it is Section 6.1's scan run twice, once on a "keep" flag array and once on a "discard" flag array, with the discard group's positions starting right after the keep group's own total count.
+
+### The Sequential (CPU) Baseline
+
+A CPU partitions into two ordered groups with one loop and two growable output lists:
+
+```
+void partition_cpu(const std::vector<int>& data,
+                    std::vector<int>& kept, std::vector<int>& discarded) {
+    for (int v : data) {
+        if (v % 3 == 0) kept.push_back(v);
+        else discarded.push_back(v);
+    }
+}
+```
+
+Both groups fall out naturally in their original relative order, since each element is appended to one list or the other the moment it is visited, in order. Section 6.3's two separate scans (one per group) exist because a GPU kernel's threads must all learn their own output positions in advance and in parallel; a single CPU thread never needed to solve that problem, since it can simply keep two lists and append to whichever one applies as it goes.
 
 ### The Concept, In Detail
 

@@ -21,6 +21,20 @@ Chapters 6 and 7 both needed to hand elements unique output positions — compac
 
 Chapter 6 computed every kept element's output slot with an exclusive scan, guaranteeing both correctness AND order. There is a second, simpler-looking way to hand out unique slots for a shared append-only buffer: skip the scan, and let every qualifying thread atomically grab the NEXT free slot directly — exactly Chapter 7.3's cursor trick, with only one bucket. It is genuinely correct. What it does not give you is Chapter 6's order guarantee, and this section proves that by direct construction rather than by assertion.
 
+### The Sequential (CPU) Baseline
+
+```
+std::vector<int> append_cpu(const std::vector<int>& data) {
+    std::vector<int> out;
+    for (int v : data) {
+        if (v % 3 == 0) out.push_back(v);   // one thread; no reservation needed at all
+    }
+    return out;
+}
+```
+
+`push_back` on a CPU already IS a safe, unique slot reservation, because only one thread ever calls it — there is no possibility of two calls claiming the same slot. Section 8.1's atomicAdd-based reservation exists to give many GPU threads that exact same guarantee (a unique slot, never double-claimed) when they all want to append at once, which is a problem a single CPU thread never has.
+
 ### The Concept, In Detail
 
 `pos = atomicAdd(&count, 1); buffer[pos] = value;` gives every qualifying thread a UNIQUE position — no two threads can ever receive the same `pos`, because `atomicAdd` is indivisible (Chapter 7.1's own guarantee). What it does NOT control is WHICH thread gets WHICH position — that depends entirely on the order in which the hardware happens to service each thread's `atomicAdd` call, and Chapter 1 already established that a real GPU never promises blocks execute in any particular order, or even concurrently.
@@ -210,6 +224,20 @@ Both schedules keep the identical 86 elements — the same count, the same set �
 ### Intuition
 
 Section 8.1's `atomicAdd`-based reservation is correct because `atomicAdd` is a single, indivisible hardware operation. It is tempting to write the same "grab a slot, then use it" idea BY HAND instead — read the current size, use it as your own slot, then write the incremented size back — reasoning that it is "basically the same thing." It is not: written by hand, that is three separate steps, and Chapter 7.1 already proved exactly what happens when a warp's lanes run three separate steps in lockstep on the same shared value.
+
+### The Sequential (CPU) Baseline
+
+```
+std::vector<int> grow_cpu(int count) {
+    std::vector<int> buffer;             // std::vector grows itself automatically, safely,
+    for (int i = 0; i < count; i++) {    // because only one thread is ever calling push_back
+        buffer.push_back(i);
+    }
+    return buffer;
+}
+```
+
+`std::vector::push_back` already does exactly the "check size, grow if needed, then write" pattern this section is about to show breaking — and on a CPU, with one thread, it is completely safe, which is exactly why it is most programmers' first instinct to reach for the same idea on a GPU. This section shows precisely what goes wrong the moment many threads try to run that same, otherwise-correct-looking pattern at once.
 
 ### The Concept, In Detail
 
@@ -455,6 +483,20 @@ The naive pattern loses 31 of 32 appends in the traced wave and under-reports it
 ### Intuition
 
 Section 8.2's two-pass fix is the right answer whenever a second full pass over the data is affordable. Plenty of real GPU workloads cannot afford one: collecting ray-triangle intersections, contact points in a physics step, or frontier edges in a graph traversal often needs a SINGLE pass, into a buffer whose capacity was fixed before the kernel even launched. This section builds the pattern actually used there.
+
+### The Sequential (CPU) Baseline
+
+```
+int bounded_append_cpu(std::vector<int>& buffer, int value, int capacity) {
+    if ((int)buffer.size() < capacity) {
+        buffer.push_back(value);
+        return (int)buffer.size() - 1;   // the slot just filled
+    }
+    return -1;   // over capacity -- caller can detect and react
+}
+```
+
+On a CPU, checking the size before writing is completely safe with one thread — there is no gap for another thread's write to land in between the check and the append. Section 8.3's atomicAdd-based version exists to give many GPU threads that identical guarantee: a correct, race-free count of true demand and a correctly bounded set of writes, even when the check-then-write pattern above is being executed by many threads simultaneously instead of just one.
 
 ### The Concept, In Detail
 

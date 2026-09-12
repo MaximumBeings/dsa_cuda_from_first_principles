@@ -21,6 +21,18 @@ Reduction (Chapter 4) collapses many values into one. Scan (Chapter 5) computes 
 
 Counting how many elements fall into each of 10 buckets sounds like it should be even EASIER than compaction — no scatter positions to compute, just `hist[bucket]++` for whichever bucket an element belongs to. The trouble is that "many elements, one bucket" is exactly the case Chapter 1 already warned about: several threads in the same warp executing the same instruction on the same address, at the same lockstep moment.
 
+### The Sequential (CPU) Baseline
+
+```
+std::vector<int> histogram_cpu(const std::vector<int>& bucket_of, int num_buckets) {
+    std::vector<int> hist(num_buckets, 0);
+    for (int b : bucket_of) hist[b]++;   // completely correct: one thread, no race possible
+    return hist;
+}
+```
+
+This is precisely `simulate_atomic_histogram` from the code below, and on a single CPU thread it needs nothing special at all — `hist[b]++` is perfectly correct because there is exactly one thread ever touching `hist`. The entire race this section traces only exists once many GPU threads run this identical line AT THE SAME TIME; the code is not wrong in isolation, the CONCURRENCY is what breaks it.
+
 ### The Concept, In Detail
 
 A single C++ statement like `hist[bucket]++` is not one hardware step. It is three: LOAD the current value, ADD one to it, STORE the result back. On a real CPU with one thread, that separation is invisible — nothing else can run between the load and the store. On a GPU warp, it is the entire problem: every lane in the warp issues the LOAD together, then every lane issues the ADD together, then every lane issues the STORE together (Chapter 1's lockstep model, unchanged). If two or more lanes happen to target the SAME bucket, they all load the identical pre-increment value, each independently computes the identical "value + 1," and then all of them store that identical result back — no matter how many lanes were racing for that bucket, only one increment's worth of progress survives.
@@ -225,6 +237,10 @@ The naive, non-atomic count undercounts every single bucket — 318 total increm
 ### Intuition
 
 Section 7.1 already proved atomicAdd is CORRECT — it never loses an increment. So why would a real histogram kernel do anything more elaborate than "every thread calls atomicAdd on the global histogram directly"? Because correctness and speed are different questions: with only `NUM_BUCKETS` distinct addresses and potentially thousands of threads across the whole grid all wanting to touch them, every one of those threads' atomicAdd calls serializes against every OTHER thread's atomicAdd to the same bucket, across the ENTIRE grid at once.
+
+### The Sequential (CPU) Baseline
+
+The identical single-thread loop from Section 7.1 is the whole story on a CPU — there is no notion of "per-block" histograms, or any contention to reduce, when only one thread ever increments `hist`. Privatization exists purely to reduce how many GPU threads simultaneously contend for the same small set of global addresses; a sequential CPU histogram has no such contention to begin with.
 
 ### The Concept, In Detail
 
@@ -462,6 +478,28 @@ Both kernels produce the identical, correct histogram (128 per bucket, matching 
 ### Intuition
 
 A histogram tells you how MANY elements belong in each bucket. Chapter 6.2 already solved a closely related problem — turning per-block COUNTS into per-block starting OFFSETS, with an exclusive scan — for stream compaction's multi-block combination step. Running that identical scan over a histogram's per-bucket counts instead of per-block counts answers a new question: at what output index should each bucket's group of elements START? Once every bucket knows its starting offset, one more pass can place every element directly into a fully sorted output array.
+
+### The Sequential (CPU) Baseline
+
+The well-known sequential counting sort needs nothing but three ordinary loops:
+
+```
+std::vector<int> counting_sort_cpu(const std::vector<int>& data, int num_buckets) {
+    std::vector<int> hist(num_buckets, 0);
+    for (int v : data) hist[v]++;                          // step 1: count
+
+    std::vector<int> offsets(num_buckets, 0);
+    for (int b = 1; b < num_buckets; b++)
+        offsets[b] = offsets[b - 1] + hist[b - 1];          // step 2: running total = exclusive scan
+
+    std::vector<int> out(data.size());
+    std::vector<int> cursor = offsets;
+    for (int v : data) out[cursor[v]++] = v;                // step 3: place, advancing each bucket's cursor
+    return out;
+}
+```
+
+Computing the offsets is just a running total, and no thread ever has to coordinate with any other thread over who gets which output slot, because there IS only one thread. Section 7.3's GPU version needs Chapter 5's parallel scan to compute those SAME offsets in parallel, and needs atomicAdd to hand out unique positions safely, precisely because many threads now have to agree, at the same instant, on both the running totals and on who writes where.
 
 ### The Concept, In Detail
 

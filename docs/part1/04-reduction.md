@@ -20,6 +20,20 @@ Part 0 built the vocabulary; Part 1 starts spending it. This chapter is the firs
 
 Chapter 3's tree reduction combined adjacent pairs, then adjacent pairs of those results. The most direct way to write "which threads are active at step `s`" as an index test is `tid % (2*s) == 0` — thread 0, thread `2s`, thread `4s`, and so on. This looks harmless. It is not: Chapter 1 established that a warp's cost is the number of *distinct paths* its 32 lanes take, and a modulus test recurs *inside every warp's own lane numbering*, not just at the boundary between warps.
 
+### The Sequential (CPU) Baseline
+
+On a CPU, reduction is nothing but one loop:
+
+```
+float reduce_cpu(const float* data, int n) {
+    float sum = 0.0f;
+    for (int i = 0; i < n; i++) sum += data[i];
+    return sum;
+}
+```
+
+O(n) work, one running variable, no notion of "warps" or "divergence" at all, because there is only ever one thread doing the adding. Warp divergence is not a cost this loop could ever pay — it is a cost that only appears once the identical reduction is rewritten to run across many threads at once, which is exactly what the rest of this section does.
+
 ### The Concept, In Detail
 
 A 256-thread block has exactly 8 warps of 32 lanes each. At every step of the reduction, SOME threads are "active" (they still have an addition to do) and the rest are not. What determines a warp's issue-pass cost, by Chapter 1's own rule, is not how many of ITS 32 lanes are active — it is whether they are ALL active, ALL inactive, or a MIX. A mix costs 2 issue-passes (the warp's scheduler issues the instruction once for the active lanes and once more, wastefully, for the inactive ones); uniform costs 1; fully idle costs 0.
@@ -240,6 +254,10 @@ Every one of the first five steps keeps every single warp in the block divergent
 
 Section 4.1's divergence problem is not that too many threads participate — it is *which* threads participate. If the active threads at every step are a single *contiguous* block starting from thread 0, that active/inactive boundary can fall inside at most one warp at any given step, no matter how the boundary shrinks.
 
+### The Sequential (CPU) Baseline
+
+The CPU baseline is unchanged from Section 4.1 — the identical one-loop function above computes the identical sum with the identical O(n) work, regardless of which GPU index test this section is about to change. What Section 4.2 improves is entirely a property of how the GPU version divides its work across warps; the sequential version never had that property to begin with, which is exactly why the fix belongs entirely on the GPU side.
+
 ### The Concept, In Detail
 
 Changing the test from `tid % (2*s) == 0` to `tid < s`, with `s` halving from `blockDim.x/2` down to 1, makes the active set a single contiguous run `[0, s)` instead of a scattered, evenly-spread set. A contiguous run has exactly ONE boundary — the point where thread ID `s-1` (active) meets thread ID `s` (inactive) — and that single boundary can only ever fall inside ONE warp's 32 consecutive lane numbers. Every OTHER warp is entirely on one side of it: either every one of its lanes is below `s` (uniform, 1 pass) or every one of its lanes is at or above `s` (fully idle, 0 passes).
@@ -444,6 +462,10 @@ A 5.53x reduction in issue-passes, for two kernels that compute the bit-identica
 ### Intuition
 
 Sections 4.1 and 4.2 reduced exactly 256 elements — one block's worth. A real reduction has to handle `N` far larger than any single block can hold in shared memory. The standard answer combines three ideas this book has already built separately: a grid-stride loop lets each thread pre-accumulate several elements before the tree even starts, each block's tree reduces its own threads down to one partial sum, and a second, smaller launch reduces the resulting (much shorter) array of per-block partial sums.
+
+### The Sequential (CPU) Baseline
+
+The identical single loop from Section 4.1 handles `N = 100,000` exactly as easily as `N = 256` — a CPU loop does not care how large `N` is, it simply iterates more times. There is no CPU equivalent of this section's two-phase, two-kernel design at all: splitting the work across blocks, giving each block its own shared-memory tile, and combining partial sums with a second launch are all concessions to how a GPU's shared memory and grid dimensions work, not anything a sequential reduction ever needs.
 
 ### The Concept, In Detail
 

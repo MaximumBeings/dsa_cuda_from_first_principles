@@ -21,6 +21,22 @@ Reduction collapses `n` elements to one value. Scan (also called prefix sum) ask
 
 An inclusive scan turns `[3, 1, 4, 1, 5]` into `[3, 4, 8, 9, 14]` — each output position is the sum of every input up to and including that position. Chapter 4's reduction tree does not directly give this: its intermediate levels hold partial sums of specific subranges on the way to one final total, not a running total ending at every position. Getting every position's own running total needs a different access pattern.
 
+### The Sequential (CPU) Baseline
+
+A CPU computes an inclusive scan with exactly one pass and one running variable:
+
+```
+void scan_inclusive_cpu(const float* in, float* out, int n) {
+    float running = 0.0f;
+    for (int i = 0; i < n; i++) {
+        running += in[i];
+        out[i] = running;
+    }
+}
+```
+
+O(n) work, not O(n log n), and no notion of "steps" or double-buffering at all, because each position's answer is trivially available the moment the position before it has been processed. The GPU version below needs `log2(n)` STEPS and touches nearly every position at EACH step specifically because no single GPU thread can see every earlier position's running total the way one sequential loop naturally can — the extra work is the price of turning one sequential dependency chain into something many threads can execute at once.
+
 ### The Concept, In Detail
 
 The Hillis-Steele scan gets there by brute force, correctly: at step `d` (1, 2, 4, ..., up to `n/2`), every position `i >= d` adds the value `d` positions behind it. Traced on a small 8-element example (all ones, so the correct inclusive answer at position `i` is simply `i+1`):
@@ -205,6 +221,22 @@ Correct at every position, matched against an independent sequential scan. But t
 ### Intuition
 
 Section 5.1's O(n log n) work comes from touching nearly every position at every step. Blelloch's scan instead builds an EXPLICIT binary tree over the data in two sweeps: an up-sweep that is exactly Chapter 4's reduction (each level halves the active count, same shape, same O(n) total work), then a down-sweep that distributes the tree's stored partial sums back down, turning "just the total" into a running total at every position.
+
+### The Sequential (CPU) Baseline
+
+The exclusive version is the identical one-pass CPU loop as Section 5.1's baseline, just writing the running total BEFORE adding the current element instead of after:
+
+```
+void scan_exclusive_cpu(const float* in, float* out, int n) {
+    float running = 0.0f;
+    for (int i = 0; i < n; i++) {
+        out[i] = running;
+        running += in[i];
+    }
+}
+```
+
+Still O(n) work, still no up-sweep or down-sweep of any kind. Blelloch's two-sweep tree exists purely to recover this same O(n) work bound in a form that many GPU threads can execute in O(log n) steps; a single CPU thread never needed a tree to begin with, since it already gets O(n) work for free from one straightforward loop.
 
 ### The Concept, In Detail
 
@@ -447,6 +479,10 @@ Correct against an independent exclusive-scan reference, and the comparison agai
 ### Intuition
 
 Sections 5.1 and 5.2 scanned exactly one block. A real scan needs `N` far larger than one block holds — and unlike reduction, where combining per-block partial sums is a second small reduction, scan's per-block results need CORRECTING, not just combining: block 1's local scan is only correct relative to block 1's own start, and every one of its values needs block 0's total added on top to be correct for the whole array.
+
+### The Sequential (CPU) Baseline
+
+Exactly like Chapter 4.3, the single-pass CPU loop from Section 5.2 handles `N = 2048` (or any larger `N`) without modification — a CPU scan never needs to know about "blocks" at all. This section's three-kernel design (local scan, scan-of-totals, offset-broadcast) exists entirely to work around a single GPU block's limited shared memory and thread count; it recovers the identical answer the one-line CPU loop already computes trivially, just structured so many blocks can each do a bounded piece of the work.
 
 ### The Concept, In Detail
 
