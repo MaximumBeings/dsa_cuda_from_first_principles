@@ -75,6 +75,7 @@ nav:
   - "Part 3 — Sorting":
       - "12. Bitonic Sort": part3/12-bitonic-sort.md
       - "13. Radix Sort": part3/13-radix-sort.md
+      - "14. Merge Sort and Sample Sort": part3/14-merge-sort-and-sample-sort.md
 
 extra:
   social: []

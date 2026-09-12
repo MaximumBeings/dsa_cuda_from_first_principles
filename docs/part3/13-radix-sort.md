@@ -987,7 +987,7 @@ Radix sort never compares two keys against each other; instead, it repeatedly bu
 
 ## Where We Go Next
 
-Across Part 1, Part 2, and now Part 3, this book has built its intuitions on small, hand-traceable examples -- N=8 arrays, single-block kernels, and (in this sandboxed environment) host-side replays of genuinely correct kernel code. Real GPU workloads run at scales where a single block cannot even hold all the data being processed at once, and where the primitives built throughout this book -- reduction, scan, compaction, histograms, atomics, and now sorting -- need to cooperate ACROSS blocks and across full grids, with all the extra synchronization and multi-pass orchestration that implies. The final part of this book turns to exactly that: composing everything built so far into complete, grid-scale data structures and algorithms, and confronting directly what changes when "one block's worth of threads" is no longer the whole story.
+Radix sort's `O(d * (n + base))` work and bitonic sort's `O(n log^2 n)` work both still implicitly assumed the array fits where one block (or one thread's own binary-search-free view of the data) can see all of it at once. Chapter 14 closes out Part 3 by dropping that assumption: it builds a genuinely parallel MERGE of two already-sorted arrays (surprisingly, this turns out to need its own new technique, since a sequential merge's pointer-walk has the same unavoidable-span problem Chapter 11's linked lists did), chains that merge into a complete merge sort, and then introduces sample sort -- a strategy for partitioning data across many independent blocks in a single pass, with no cross-block merging needed afterward at all.
 
 ## Worked Solutions
 
