@@ -21,9 +21,36 @@ Reduction collapses `n` elements to one value. Scan (also called prefix sum) ask
 
 An inclusive scan turns `[3, 1, 4, 1, 5]` into `[3, 4, 8, 9, 14]` — each output position is the sum of every input up to and including that position. Chapter 4's reduction tree does not directly give this: its intermediate levels hold partial sums of specific subranges on the way to one final total, not a running total ending at every position. Getting every position's own running total needs a different access pattern.
 
-### Background
+### The Concept, In Detail
 
-The Hillis-Steele scan gets there by brute force, correctly: at step `d` (1, 2, 4, ..., up to `n/2`), every position `i >= d` adds the value `d` positions behind it. After `log2(n)` steps, position `i` holds the sum of every position within `n` steps behind it that's actually in range — which, once `d` has doubled past `i` itself, is everything from the start. The kernel below double-buffers between two shared-memory arrays because a single in-place array would let one thread read a value another thread already overwrote earlier in the same step.
+The Hillis-Steele scan gets there by brute force, correctly: at step `d` (1, 2, 4, ..., up to `n/2`), every position `i >= d` adds the value `d` positions behind it. Traced on a small 8-element example (all ones, so the correct inclusive answer at position `i` is simply `i+1`):
+
+```
+Hillis-Steele inclusive scan, n=8, input = [1, 1, 1, 1, 1, 1, 1, 1]
+
+start:                    1  1  1  1  1  1  1  1
+
+d=1  out[i] = in[i] + (i>=1 ? in[i-1] : 0)   -- every position adds the
+                                                 value 1 slot behind it
+                          1  2  2  2  2  2  2  2
+
+d=2  out[i] = in[i] + (i>=2 ? in[i-2] : 0)   -- every position adds the
+                                                 value 2 slots behind it
+                          1  2  3  4  4  4  4  4
+
+d=4  out[i] = in[i] + (i>=4 ? in[i-4] : 0)   -- every position adds the
+                                                 value 4 slots behind it
+                          1  2  3  4  5  6  7  8
+
+log2(8) = 3 steps, and every position now holds its own correct running
+total -- not just position 7 (the "reduction" answer), but every one.
+```
+
+The kernel double-buffers between two shared-memory arrays (writing this step's results into a fresh array rather than overwriting the one still being read) because a single in-place array would let one thread read a value another thread already overwrote earlier in the very same step — exactly the kind of same-step read-after-write hazard Chapter 2's shared-memory staging already taught this book to watch for.
+
+The cost is visible directly from the diagram: at `d=1`, 7 of the 8 positions do an addition; at `d=2`, 6 positions do; at `d=4`, 4 positions do. Nearly every step touches nearly every position — for `n=256` (this section's actual size), the exact total is `sum of (n-d)` for `d = 1, 2, 4, ..., 128`, which comes to `255+254+252+248+240+224+192+128 = 1793` additions, in `log2(256) = 8` steps.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -138,7 +165,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 13_hillis_steele_scan.cu -o hillis_steele_scan
+./hillis_steele_scan
+```
+
+**Sample input:** `BLOCK_SIZE = 256` elements, all set to `1.0`, so the correct inclusive scan is simply `1, 2, 3, ..., 256`.
+
+**Sample output:**
 
 ```text
 === Section 5.1: Hillis-Steele inclusive scan ===
@@ -170,9 +206,47 @@ Correct at every position, matched against an independent sequential scan. But t
 
 Section 5.1's O(n log n) work comes from touching nearly every position at every step. Blelloch's scan instead builds an EXPLICIT binary tree over the data in two sweeps: an up-sweep that is exactly Chapter 4's reduction (each level halves the active count, same shape, same O(n) total work), then a down-sweep that distributes the tree's stored partial sums back down, turning "just the total" into a running total at every position.
 
-### Background
+### The Concept, In Detail
 
-The up-sweep is Chapter 4's reduction, unchanged. After it finishes, the last position holds the array's true total; setting it to zero (the identity element for addition) turns what follows into an EXCLUSIVE scan — each position gets the sum of everything strictly BEFORE it, not including itself. The down-sweep then walks the same tree structure backward: at each node, the left child receives the parent's old value, and the right child receives the parent's old value plus what the left child just received.
+Traced by hand on the same 8-element, all-ones example makes both sweeps concrete. The up-sweep is a reduction tree, exactly Chapter 4's shape, just written with explicit tree indices instead of a shared-memory halving loop:
+
+```
+UP-SWEEP (identical shape to Chapter 4's reduction tree), n=8:
+
+start:                          1  1  1  1  1  1  1  1
+
+d=4 (stride 1): combine pairs (0,1) (2,3) (4,5) (6,7)
+                                1  2  1  2  1  2  1  2
+
+d=2 (stride 2): combine pairs (1,3) (5,7)
+                                1  2  1  4  1  2  1  4
+
+d=1 (stride 4): combine pair (3,7)
+                                1  2  1  4  1  2  1  8   <- index 7 = TRUE TOTAL
+
+zero the last element (addition's identity element) to start an
+EXCLUSIVE scan:                1  2  1  4  1  2  1  0
+```
+
+The down-sweep then walks the identical tree structure backward. At each node the up-sweep visited, the LEFT child receives the parent's OLD value, and the RIGHT child receives the parent's old value PLUS what the left child just received:
+
+```
+DOWN-SWEEP (walking the same tree backward), continuing from above:
+
+d=1 (stride 4): at the pair (3,7): left=3 gets old right(7)=0,
+                right=7 gets old right(7) + old left(3) = 0+4=4
+                                1  2  1  0  1  2  1  4
+
+d=2 (stride 2): at pairs (1,3) and (5,7):
+                                1  0  1  2  1  4  1  6
+
+d=4 (stride 1): at pairs (0,1) (2,3) (4,5) (6,7):
+                                0  1  2  3  4  5  6  7   <- correct exclusive scan
+```
+
+Every position now holds the sum of everything strictly BEFORE it, matching the exclusive-scan definition exactly. The up-sweep alone already matches Hillis-Steele's entire span (`log2(n)` levels); the down-sweep adds a second, equally deep pass on top — doubling the span in exchange for cutting the work down to barely more than reduction's own `O(n)`.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -328,7 +402,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 14_blelloch_work_efficient_scan.cu -o blelloch_scan
+./blelloch_scan
+```
+
+**Sample input:** `N = 256` elements, all set to `1.0`, so the correct exclusive scan is simply `0, 1, 2, ..., 255`.
+
+**Sample output:**
 
 ```text
 === Section 5.2: Blelloch's work-efficient exclusive scan ===
@@ -365,9 +448,41 @@ Correct against an independent exclusive-scan reference, and the comparison agai
 
 Sections 5.1 and 5.2 scanned exactly one block. A real scan needs `N` far larger than one block holds — and unlike reduction, where combining per-block partial sums is a second small reduction, scan's per-block results need CORRECTING, not just combining: block 1's local scan is only correct relative to block 1's own start, and every one of its values needs block 0's total added on top to be correct for the whole array.
 
-### Background
+### The Concept, In Detail
 
-The three-kernel design below reuses Section 5.2's exact exclusive-scan shape twice. Kernel 1 scans each block's own data locally, while also recording each block's true total (captured right before it gets zeroed for the exclusive-scan identity) into a short array. Kernel 2 exclusive-scans THAT short array — the identical kernel shape, launched once more, over far fewer elements — turning each block's own total into the correct OFFSET that block's results need. Kernel 3 adds each block's offset into every one of its own local results.
+Three kernels, reusing Section 5.2's exact exclusive-scan shape twice — once on the real data, once on a much shorter array of per-block totals:
+
+```
+N = 2048 elements across NUM_BLOCKS = 8 blocks of 256 elements each
+
+KERNEL 1 (8 blocks, run independently): each block exclusive-scans its
+OWN 256 elements (Section 5.2's exact shape), separately recording its
+own TRUE total -- captured right before the up-sweep's last element gets
+zeroed for the exclusive-scan identity:
+
+  block totals:  1774  1790  1806  1783  1786  1802  1792  1782
+
+each block's own 256 outputs are only correct RELATIVE TO THAT BLOCK's
+own start -- block 1's values still need block 0's entire total (1774)
+added on top before they are correct for the whole 2048-element array.
+
+KERNEL 2 (1 block, over just the 8 block totals): exclusive-scan those
+totals with the IDENTICAL scan shape, turning each block's total into
+the OFFSET that block's own results need:
+
+  block totals:  1774  1790  1806  1783  1786  1802  1792  1782
+  offsets:          0  1774  3564  5370  7153  8939 10741 12533
+  (block b's offset = sum of every block's total strictly before b --
+  scan's own definition, applied one level up)
+
+KERNEL 3 (8 blocks again): add each block's own offset into every one
+of its 256 local results -- every one of block 3's 256 values gets
++5370, every one of block 7's gets +12533, and so on.
+```
+
+The three kernels are not three different algorithms — kernels 1 and 2 run the literal same scan shape, just at two different scales (2048 elements split into 8 groups of 256, then those 8 group totals scanned directly), and kernel 3 is a simple broadcast-add.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -592,7 +707,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 15_multi_block_scan.cu -o multi_block_scan
+./multi_block_scan
+```
+
+**Sample input:** `N = 2048` elements, all set to values in `[1, 8]` deterministically varied by position, launched as `NUM_BLOCKS = 8` blocks of 256 elements each.
+
+**Sample output:**
 
 ```text
 === Section 5.3: multi-block scan, three kernels ===

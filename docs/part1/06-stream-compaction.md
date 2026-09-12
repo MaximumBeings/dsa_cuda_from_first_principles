@@ -20,9 +20,35 @@ Reduction (Chapter 4) answers "what is the total." Scan (Chapter 5) answers "wha
 
 Filtering `[0, 1, 2, 3, 4, 5, 6]` down to multiples of 3 should produce `[0, 3, 6]`, in that same relative order. A sequential pass does this with one running output index, incrementing it each time an element is kept. The parallel version needs to know, for every kept element, how many OTHER kept elements come before it — which is exactly what an exclusive scan of a "was this element kept" flag array computes.
 
-### Background
+### The Concept, In Detail
 
-The kernel below computes a flag (1.0 if the predicate holds, 0.0 otherwise) for every position, exclusive-scans those flags with Chapter 5.2's exact up-sweep/down-sweep shape, and then every kept element scatters itself directly to the output position its own scanned flag value names — no further bookkeeping needed, because that scanned value already IS a count of every earlier kept element.
+Three steps, traced by hand on a small 8-element example (predicate: multiple of 3):
+
+```
+values:            0   1   2   3   4   5   6   7
+
+step 1 -- FLAG each position (1 if kept, 0 if not):
+flags:             1   0   0   1   0   0   1   0
+
+step 2 -- EXCLUSIVE SCAN the flags (Chapter 5.2's exact shape):
+excl. scan:        0   1   1   1   2   2   2   3
+(each kept position's scanned value = how many OTHER kept elements
+came strictly before it)
+
+step 3 -- SCATTER: every kept position writes to output[its own
+scanned value] -- no other bookkeeping needed:
+  i=0 (flag=1, scan=0) -> output[0] = 0
+  i=3 (flag=1, scan=1) -> output[1] = 3
+  i=6 (flag=1, scan=2) -> output[2] = 6
+
+output: [0, 3, 6]   -- exactly the 3 kept elements, original order intact
+```
+
+The scanned value at a kept position already IS that element's correct output slot — a kept element never needs to look at any OTHER element directly, only at its own position's scan result, because the scan already folded every earlier element's flag into that one number.
+
+The kernel below computes this flag array, exclusive-scans it with Chapter 5.2's exact up-sweep/down-sweep shape, and then every kept element scatters itself directly to the output position its own scanned flag value names.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -182,7 +208,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 16_single_block_compaction.cu -o single_block_compaction
+./single_block_compaction
+```
+
+**Sample input:** `N = 256` elements, values `0, 1, 2, ..., 255`, predicate = "value is a multiple of 3."
+
+**Sample output:**
 
 ```text
 === Section 6.1: single-block stream compaction via exclusive scan ===
@@ -208,9 +243,36 @@ self-check: compaction correct, count = 86 multiples of 3 in [0,255]: confirmed
 
 Section 6.1 compacted one block. A real compaction needs `N` larger than that, and the combination step across blocks looks exactly like Chapter 5.3's multi-block scan for the same underlying reason: each block CAN compact its own segment correctly in isolation, but every block's kept elements then need shifting by how many elements every earlier block kept — an exclusive scan of per-block kept-COUNTS, rather than per-block sums, but otherwise the identical pattern.
 
-### Background
+### The Concept, In Detail
+
+The same three-kernel shape as Chapter 5.3, with "sums" replaced by "kept-counts":
+
+```
+N = 2048 elements across NUM_BLOCKS = 8 blocks of 256 elements each
+
+KERNEL 1 (8 blocks): each block runs Section 6.1's exact compaction on
+its OWN 256 elements into a same-sized local segment, separately
+recording its own LOCAL kept-count:
+
+  local kept-counts:   86   85   85   86   85   85   86   85
+
+KERNEL 2 (1 block, over the 8 local counts): exclusive-scan those
+counts -- Chapter 5's identical shape -- into GLOBAL starting offsets:
+
+  local counts:   86   85   85   86   85   85   86   85
+  offsets:          0   86  171  256  342  427  512  598
+  (block b's offset = sum of every block's kept-count strictly
+  before b -- scan's own definition, applied to counts instead of sums)
+
+KERNEL 3 (8 blocks again): copy each block's locally-compacted
+elements into their final global position, shifted by that block's
+own scanned offset -- block 4's local element 0 lands at global
+position 342, block 4's local element 1 at 343, and so on.
+```
 
 Kernel 1 below is Section 6.1's exact compaction, run once per block into a same-sized local segment, additionally recording each block's own kept-count. Kernel 2 exclusive-scans those per-block counts — the identical scan shape from Chapter 5, reused at a much smaller scale, exactly as Chapter 5.3 reused it for sums. Kernel 3 copies each block's locally-compacted elements into their final position, shifted by that block's now-scanned offset.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -459,7 +521,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 17_multi_block_compaction.cu -o multi_block_compaction
+./multi_block_compaction
+```
+
+**Sample input:** `N = 2048` elements across `NUM_BLOCKS = 8` blocks of 256 elements each, same "multiple of 3" predicate as Section 6.1.
+
+**Sample output:**
 
 ```text
 === Section 6.2: multi-block stream compaction, three kernels ===
@@ -499,9 +570,42 @@ all 683 kept elements: confirmed
 
 Sections 6.1 and 6.2 discarded elements that failed the predicate. A stable PARTITION keeps everything instead, splitting the array into two groups: elements that pass the predicate, in their original order, followed by elements that fail it, also in their original order. This is not a new algorithm — it is Section 6.1's scan run twice, once on a "keep" flag array and once on a "discard" flag array, with the discard group's positions starting right after the keep group's own total count.
 
-### Background
+### The Concept, In Detail
 
-The kernel below factors the exclusive-scan shape into a small reusable device function specifically because this section needs it twice on two different flag arrays in the same kernel. Every element scatters to one of two possible destinations: the kept scan's value directly, if it passed; or the total kept count plus the discard scan's value, if it didn't. Part 3's radix sort will call this exact same operation once per bit of a number being sorted, separating elements with a 0 in the current digit from elements with a 1.
+Traced on the same 8-element example, now keeping BOTH groups:
+
+```
+values:          0   1   2   3   4   5   6   7
+keep_flags:      1   0   0   1   0   0   1   0     (multiple of 3)
+discard_flags:   0   1   1   0   1   1   0   1     (the complement)
+
+keep_scan    (exclusive scan of keep_flags):     0 1 1 1 2 2 2 3
+discard_scan (exclusive scan of discard_flags):  0 0 1 2 2 3 4 4
+
+total_kept = 3 (the keep group's true total, from the keep scan's own root)
+
+every element scatters to ONE of two destinations:
+  if kept:      output[ keep_scan[i] ]                  = value
+  if discarded: output[ total_kept + discard_scan[i] ]  = value
+
+  i=0 (kept)     -> output[0]     = 0
+  i=1 (discard)  -> output[3+0=3] = 1
+  i=2 (discard)  -> output[3+1=4] = 2
+  i=3 (kept)     -> output[1]     = 3
+  i=4 (discard)  -> output[3+2=5] = 4
+  i=5 (discard)  -> output[3+3=6] = 5
+  i=6 (kept)     -> output[2]     = 6
+  i=7 (discard)  -> output[3+4=7] = 7
+
+output: [0, 3, 6, 1, 2, 4, 5, 7]
+         \___kept, in order___/ \___discarded, in order___/
+```
+
+Both groups land in a single output array, back to back, and each one independently preserves the original relative order of its own elements — the kept group's `0, 3, 6` and the discarded group's `1, 2, 4, 5, 7` are each still in increasing original-position order.
+
+The kernel below factors the exclusive-scan shape into a small reusable device function specifically because this section needs it twice on two different flag arrays in the same kernel. Part 3's radix sort will call this exact same operation once per bit of a number being sorted, separating elements with a 0 in the current digit from elements with a 1.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -684,7 +788,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 18_stable_partition.cu -o stable_partition
+./stable_partition
+```
+
+**Sample input:** `N = 256` elements, values `0, 1, 2, ..., 255`, same "multiple of 3" predicate, now partitioning instead of discarding.
+
+**Sample output:**
 
 ```text
 === Section 6.3: stable partition, both sides kept ===

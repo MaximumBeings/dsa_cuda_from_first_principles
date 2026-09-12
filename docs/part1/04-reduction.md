@@ -20,9 +20,41 @@ Part 0 built the vocabulary; Part 1 starts spending it. This chapter is the firs
 
 Chapter 3's tree reduction combined adjacent pairs, then adjacent pairs of those results. The most direct way to write "which threads are active at step `s`" as an index test is `tid % (2*s) == 0` — thread 0, thread `2s`, thread `4s`, and so on. This looks harmless. It is not: Chapter 1 established that a warp's cost is the number of *distinct paths* its 32 lanes take, and a modulus test recurs *inside every warp's own lane numbering*, not just at the boundary between warps.
 
-### Background
+### The Concept, In Detail
+
+A 256-thread block has exactly 8 warps of 32 lanes each. At every step of the reduction, SOME threads are "active" (they still have an addition to do) and the rest are not. What determines a warp's issue-pass cost, by Chapter 1's own rule, is not how many of ITS 32 lanes are active — it is whether they are ALL active, ALL inactive, or a MIX. A mix costs 2 issue-passes (the warp's scheduler issues the instruction once for the active lanes and once more, wastefully, for the inactive ones); uniform costs 1; fully idle costs 0.
+
+`tid % (2*s) == 0` places its active lanes at 0, `2s`, `4s`, `6s`, ... — evenly spread across the ENTIRE 256-thread range, at every step, no matter how small `s` gets. Trace warp 0 (block-local lanes 0-31) directly:
+
+```
+interleaved addressing: warp 0's own 32 lanes, A = active, . = inactive
+
+s=1   (active where tid %   2 == 0):
+      A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A
+      16 of 32 lanes active, alternating every OTHER lane -> MIXED (2 passes)
+
+s=16  (active where tid %  32 == 0):
+      A...............................
+      only lane 0 active -- STILL mixed (2 passes) -- same cost as s=1
+
+s=128 (active where tid % 256 == 0):
+      A...............................
+      only lane 0 active -- STILL mixed (2 passes) -- same cost as s=16
+```
+
+Lane 0 of warp 0 is global thread 0 — the thread that ends up holding the reduction's final answer — so it never stops being active, and warp 0 never becomes uniform, at ANY of the 8 steps. What actually changes step to step is how many of the OTHER 7 warps in the block still have any active lane left at all:
+
+```
+step_s:          1    2    4    8   16   32   64  128
+active warps:    8    8    8    8    8    4    2    1     (out of 8 total)
+each active warp is MIXED until it drops to 0 active lanes, so it costs 2
+passes right up until the step where it goes fully idle:
+issue passes:   16   16   16   16   16    8    4    2     -> sums to 94
+```
 
 The kernel below reduces one block's shared-memory tile using exactly this interleaved-addressing test. Its host-side model walks the identical per-step active/inactive pattern and counts issue-passes per warp with Chapter 1's own rule: a warp with a genuine mix of active and inactive lanes pays 2 passes, a uniformly active or uniformly idle warp pays 1 or 0.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -159,7 +191,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 10_naive_interleaved_reduction.cu -o naive_reduction
+./naive_reduction
+```
+
+**Sample input:** a 256-element block (`BLOCK_SIZE = 256`), values `0, 1, 2, ..., 255`, reduced by addition.
+
+**Sample output:**
 
 ```text
 === Section 4.1: a real reduction kernel, and its divergence cost ===
@@ -199,9 +240,38 @@ Every one of the first five steps keeps every single warp in the block divergent
 
 Section 4.1's divergence problem is not that too many threads participate — it is *which* threads participate. If the active threads at every step are a single *contiguous* block starting from thread 0, that active/inactive boundary can fall inside at most one warp at any given step, no matter how the boundary shrinks.
 
-### Background
+### The Concept, In Detail
 
-Changing the test from `tid % (2*s) == 0` to `tid < s`, with `s` halving from `blockDim.x/2` down to 1, does exactly this. The kernel below is otherwise identical to Section 4.1's — same shared-memory tile, same number of steps, same total useful work — and its host-side model uses the identical warp-by-warp counting rule, reporting Section 4.1's own total inline for a direct comparison.
+Changing the test from `tid % (2*s) == 0` to `tid < s`, with `s` halving from `blockDim.x/2` down to 1, makes the active set a single contiguous run `[0, s)` instead of a scattered, evenly-spread set. A contiguous run has exactly ONE boundary — the point where thread ID `s-1` (active) meets thread ID `s` (inactive) — and that single boundary can only ever fall inside ONE warp's 32 consecutive lane numbers. Every OTHER warp is entirely on one side of it: either every one of its lanes is below `s` (uniform, 1 pass) or every one of its lanes is at or above `s` (fully idle, 0 passes).
+
+```
+sequential addressing: warp 0's own 32 lanes, test is tid < s
+
+s=128 (active where tid < 128): warps 0-3 are ENTIRELY active (uniform),
+                                 warps 4-7 are ENTIRELY inactive -- the
+                                 boundary falls BETWEEN warp 3 and warp 4,
+                                 inside NO warp's own 32 lanes.
+
+s=16  (active where tid < 16):  warp 0's own lanes:
+                                 AAAAAAAAAAAAAAAA................
+                                 (lanes 0-15 active, 16-31 inactive) --
+                                 the boundary falls INSIDE warp 0 only;
+                                 every other warp is entirely inactive.
+```
+
+Once `s` drops below 32 (one warp's width), the single boundary is permanently trapped inside warp 0 for the rest of the reduction — an IRREDUCIBLE cost, not a bug, since a tree whose active count has shrunk below one warp's size cannot possibly keep that one remaining warp uniform:
+
+```
+step_s:          128   64   32   16    8    4    2    1
+active warps:      4    2    1    1    1    1    1    1    (out of 8 total)
+mixed warps:       0    0    0    1    1    1    1    1    (boundary inside it)
+uniform warps:     4    2    1    0    0    0    0    0
+issue passes:      4    2    1    2    2    2    2    2    -> sums to 17
+```
+
+The kernel below is otherwise identical to Section 4.1's — same shared-memory tile, same number of steps, same total useful work — and its host-side model uses the identical warp-by-warp counting rule, reporting Section 4.1's own total inline for a direct comparison.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -325,7 +395,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 11_sequential_addressing_reduction.cu -o sequential_reduction
+./sequential_reduction
+```
+
+**Sample input:** the identical 256-element block and values as Section 4.1 (`0, 1, 2, ..., 255`), so the two kernels' results can be compared directly.
+
+**Sample output:**
 
 ```text
 === Section 4.2: sequential addressing, measured against Section 4.1 ===
@@ -366,9 +445,38 @@ A 5.53x reduction in issue-passes, for two kernels that compute the bit-identica
 
 Sections 4.1 and 4.2 reduced exactly 256 elements — one block's worth. A real reduction has to handle `N` far larger than any single block can hold in shared memory. The standard answer combines three ideas this book has already built separately: a grid-stride loop lets each thread pre-accumulate several elements before the tree even starts, each block's tree reduces its own threads down to one partial sum, and a second, smaller launch reduces the resulting (much shorter) array of per-block partial sums.
 
-### Background
+### The Concept, In Detail
 
-The two kernels below implement exactly this. `reduce_phase1` combines Chapter 2's grid-stride loop with Section 4.2's sequential-addressing tree; `reduce_phase2` reduces the resulting array of per-block partials with the identical tree shape, in a single block. Between the two launches sits a boundary no `__syncthreads()` can cross: different blocks in phase 1 are not guaranteed to run concurrently or in any particular order, so the only way to guarantee every block's partial sum is ready before phase 2 reads it is a whole new kernel launch — the CPU-side code between the two `<<<...>>>` calls is itself the barrier.
+The whole design is two ordinary kernels with one, unavoidable gap between them:
+
+```
+N = 100,000 elements, NUM_BLOCKS = 64, BLOCK_SIZE = 256 (16,384 total threads)
+
+PHASE 1 (64 blocks, launched together):
+  thread (block b, lane t): idx = b*256 + t, stride = 64*256 = 16384
+    acc = in[idx] + in[idx+16384] + in[idx+32768] + ...   (~6.1 elements/thread)
+  each block's 256 partial sums then tree-reduce (Section 4.2's exact shape)
+  down to ONE value per block:
+
+      block 0 -> partials[0]   block 1 -> partials[1]  ...  block 63 -> partials[63]
+
+-------------------------- KERNEL LAUNCH BOUNDARY --------------------------
+  no __syncthreads() can cross this line: blocks are not guaranteed to run
+  concurrently, or in any particular order (Chapter 1's own point about
+  block scheduling) -- only a WHOLE NEW LAUNCH guarantees every block above
+  has finished and written its partial sum before phase 2 reads any of them.
+------------------------------------------------------------------------
+
+PHASE 2 (1 block, 256 threads, launched once):
+  reads all 64 partials into shared memory (lanes 64-255 pad with 0),
+  tree-reduces them (the identical Section 4.2 shape) down to ONE final value.
+```
+
+The grid-stride loop means phase 1's cost per thread grows with `N`, but the STRUCTURE never changes — the same 64 blocks, the same tree shape, regardless of whether `N` is 100,000 or 100,000,000. What phase 2 needs, structurally, is for the NUMBER of phase-1 blocks to fit inside one block's own thread count, so a single further launch can finish the job. Chapter 3's span vocabulary generalizes cleanly here: phase 1's tree is `log2(256) = 8` levels, phase 2's tree is `log2(64) = 6` levels, and the one unavoidable launch boundary between them counts as exactly 1 more — a total span of `8 + 1 + 6 = 15`, fixed regardless of how large `N` grows.
+
+The two kernels below implement exactly this. `reduce_phase1` combines Chapter 2's grid-stride loop with Section 4.2's sequential-addressing tree; `reduce_phase2` reduces the resulting array of per-block partials with the identical tree shape, in a single block.
+
+### Code and Verification
 
 ```cpp
 #include <cstdio>
@@ -519,7 +627,16 @@ int main() {
 }
 ```
 
-Running this program produces:
+**Compile and run:**
+
+```bash
+nvcc -arch=sm_80 12_multi_block_reduction.cu -o multi_block_reduction
+./multi_block_reduction
+```
+
+**Sample input:** `N = 100000` elements, values `(i % 97) + 1` for `i` in `[0, N)` (bounded, deterministic), launched as `NUM_BLOCKS = 64` blocks of `BLOCK_SIZE = 256` threads for phase 1.
+
+**Sample output:**
 
 ```text
 === Section 4.3: a two-phase multi-block reduction ===
