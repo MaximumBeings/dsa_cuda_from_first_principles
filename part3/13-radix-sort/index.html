@@ -16,6 +16,8 @@
         <link rel="prev" href="../12-bitonic-sort/">
       
       
+        <link rel="next" href="../14-merge-sort-and-sample-sort/">
+      
       
         
       
@@ -1153,6 +1155,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../14-merge-sort-and-sample-sort/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    14. Merge Sort and Sample Sort
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2318,7 +2348,7 @@ Running passes from MOST significant digit to least significant is a genuinely d
 <li>Radix sort's pass COUNT is data-independent (it depends only on key width), but Section 13.3 also notes that each pass's actual work is NOT fully data-independent in the way bitonic sort's comparison network is. What specifically differs between the two algorithms here?</li>
 </ol>
 <h2 id="where-we-go-next">Where We Go Next<a class="headerlink" href="#where-we-go-next" title="Permanent link">&para;</a></h2>
-<p>Across Part 1, Part 2, and now Part 3, this book has built its intuitions on small, hand-traceable examples -- N=8 arrays, single-block kernels, and (in this sandboxed environment) host-side replays of genuinely correct kernel code. Real GPU workloads run at scales where a single block cannot even hold all the data being processed at once, and where the primitives built throughout this book -- reduction, scan, compaction, histograms, atomics, and now sorting -- need to cooperate ACROSS blocks and across full grids, with all the extra synchronization and multi-pass orchestration that implies. The final part of this book turns to exactly that: composing everything built so far into complete, grid-scale data structures and algorithms, and confronting directly what changes when "one block's worth of threads" is no longer the whole story.</p>
+<p>Radix sort's <code>O(d * (n + base))</code> work and bitonic sort's <code>O(n log^2 n)</code> work both still implicitly assumed the array fits where one block (or one thread's own binary-search-free view of the data) can see all of it at once. Chapter 14 closes out Part 3 by dropping that assumption: it builds a genuinely parallel MERGE of two already-sorted arrays (surprisingly, this turns out to need its own new technique, since a sequential merge's pointer-walk has the same unavoidable-span problem Chapter 11's linked lists did), chains that merge into a complete merge sort, and then introduces sample sort -- a strategy for partitioning data across many independent blocks in a single pass, with no cross-block merging needed afterward at all.</p>
 <h2 id="worked-solutions">Worked Solutions<a class="headerlink" href="#worked-solutions" title="Permanent link">&para;</a></h2>
 <p><strong>1.</strong> A full key can always be decomposed into a fixed sequence of digits (base 10, base 2, or any other base), and two keys' relative order is completely determined by comparing their digits from the most significant down -- exactly how humans compare multi-digit numbers by eye. Radix sort exploits this by processing one digit position across the WHOLE array at a time (via counting and stable placement) rather than directly comparing digit-by-digit between pairs of keys; chaining enough of these single-digit passes together (one per digit position present in the largest key) recovers the full ordering without any pairwise key comparison ever happening.</p>
 <p><strong>2.</strong> offset[d] needs to answer "where does digit d's group of elements START", so that the very first element with digit d can be placed there. An inclusive prefix sum would instead give where digit d's group ENDS (one past its last element under an inclusive convention, or its last position under another), forcing every subsequent placement to apply an extra correction. Keeping the offset array exclusive means offset[d] is immediately usable as the first free slot for digit d, with no adjustment needed.</p>
@@ -2376,6 +2406,22 @@ Running passes from MOST significant digit to least significant is a genuinely d
             </div>
           </a>
         
+        
+          
+          <a href="../14-merge-sort-and-sample-sort/" class="md-footer__link md-footer__link--next" aria-label="Next: 14. Merge Sort and Sample Sort">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                14. Merge Sort and Sample Sort
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
         
       </nav>
     
