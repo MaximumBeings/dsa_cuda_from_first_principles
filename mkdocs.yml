@@ -65,6 +65,7 @@ nav:
   - "Part 1 — Parallel Primitives":
       - "4. Reduction, For Real": part1/04-reduction.md
       - "5. Scan (Prefix Sum)": part1/05-scan.md
+      - "6. Stream Compaction": part1/06-stream-compaction.md
 
 extra:
   social: []
