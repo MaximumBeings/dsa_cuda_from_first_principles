@@ -72,6 +72,8 @@ nav:
       - "9. Lock-Free Stacks": part2/09-lock-free-stacks.md
       - "10. Lock-Free Queues": part2/10-lock-free-queues.md
       - "11. Pointer-Chasing Linked Lists": part2/11-pointer-chasing-linked-lists.md
+  - "Part 3 — Sorting":
+      - "12. Bitonic Sort": part3/12-bitonic-sort.md
 
 extra:
   social: []
