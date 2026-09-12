@@ -69,6 +69,7 @@ nav:
       - "7. Histograms": part1/07-histograms.md
   - "Part 2 — Linear Structures Under Concurrency":
       - "8. Concurrent Arrays and Growable Buffers": part2/08-concurrent-arrays.md
+      - "9. Lock-Free Stacks": part2/09-lock-free-stacks.md
 
 extra:
   social: []
