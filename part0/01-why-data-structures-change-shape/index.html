@@ -1,0 +1,1573 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Parallel-First Data Structures, From Arrays to Concurrent Hash Tables">
+      
+      
+        <meta name="author" content="Oluwaseyi Awoga">
+      
+      
+      
+        <link rel="prev" href="../../getting-started/">
+      
+      
+        <link rel="next" href="../02-execution-and-memory-model/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>1. Why Data Structures Change Shape on a GPU - Data Structures and Algorithms in CUDA C++ — Under Development</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#chapter-1-why-data-structures-change-shape-on-a-gpu" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Data Structures and Algorithms in CUDA C++ — Under Development" class="md-header__button md-logo" aria-label="Data Structures and Algorithms in CUDA C++ — Under Development" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Data Structures and Algorithms in CUDA C++ — Under Development
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              1. Why Data Structures Change Shape on a GPU
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Data Structures and Algorithms in CUDA C++ — Under Development" class="md-nav__button md-logo" aria-label="Data Structures and Algorithms in CUDA C++ — Under Development" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Data Structures and Algorithms in CUDA C++ — Under Development
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 0 — GPU Foundations for Data Structures and Algorithms
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 0 — GPU Foundations for Data Structures and Algorithms
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Why Data Structures Change Shape on a GPU
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Why Data Structures Change Shape on a GPU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#11-warp-divergence-why-threads-are-not-independent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Warp Divergence: Why Threads Are Not Independent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.1 Warp Divergence: Why Threads Are Not Independent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-pointer-chasing-two-separate-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Pointer Chasing: Two Separate Costs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.2 Pointer Chasing: Two Separate Costs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-occupancy-how-much-latency-the-machine-can-actually-hide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Occupancy: How Much Latency the Machine Can Actually Hide
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.3 Occupancy: How Much Latency the Machine Can Actually Hide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chapter-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chapter Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#self-check-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-Check Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-we-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where We Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked Solutions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-execution-and-memory-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. The CUDA Execution and Memory Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-work-span-and-complexity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. Work, Span, and Complexity on a Parallel Machine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#11-warp-divergence-why-threads-are-not-independent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Warp Divergence: Why Threads Are Not Independent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.1 Warp Divergence: Why Threads Are Not Independent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-pointer-chasing-two-separate-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Pointer Chasing: Two Separate Costs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.2 Pointer Chasing: Two Separate Costs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-occupancy-how-much-latency-the-machine-can-actually-hide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Occupancy: How Much Latency the Machine Can Actually Hide
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.3 Occupancy: How Much Latency the Machine Can Actually Hide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chapter-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chapter Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#self-check-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-Check Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-we-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where We Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked Solutions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="chapter-1-why-data-structures-change-shape-on-a-gpu">Chapter 1: Why Data Structures Change Shape on a GPU<a class="headerlink" href="#chapter-1-why-data-structures-change-shape-on-a-gpu" title="Permanent link">&para;</a></h1>
+<p><strong>What you will understand by the end of this chapter:</strong></p>
+<ul>
+<li>Why a CUDA "thread" is not a lightweight CPU thread, and what a warp's lockstep execution actually costs when its 32 lanes disagree about which branch to take.</li>
+<li>Why a pointer-chasing structure such as a linked list pays two separate, genuinely distinct costs on a GPU — one that would exist on any machine, and one that is specific to how a GPU moves memory.</li>
+<li>Why a kernel's per-thread register and shared-memory footprint sets a hard ceiling on how many warps can be resident at once, and why that ceiling determines how much of the previous cost the machine can actually hide.</li>
+<li>Why these three facts, taken together, are the reason this entire book redesigns familiar data structures from Chapter 1 onward instead of simply re-implementing textbook versions of them with <code>__global__</code> in front of the function name.</li>
+</ul>
+<p><strong>What you need to know first:</strong></p>
+<ul>
+<li>Working C++: structs, pointers, templates, and RAII at an ordinary level.</li>
+<li>Big-O notation and the standard sequential analysis of arrays, linked lists, and search.</li>
+<li>No prior CUDA experience. This chapter, and this book, build everything CUDA-specific from nothing.</li>
+</ul>
+<hr />
+<p>Every data structure in the rest of this book is shaped by three facts about the machine it runs on, and none of the three facts are about <em>arithmetic</em> being fast or slow — they are about <em>which patterns of memory access and control flow a GPU can execute cheaply, and which it cannot</em>. A sequential data structures course teaches you to count operations. This chapter teaches you to count something a sequential course has no reason to count at all: how many of a warp's 32 lanes are doing the same thing at the same time, and how many independent memory requests the machine can have in flight while any one of them waits.</p>
+<h2 id="11-warp-divergence-why-threads-are-not-independent">1.1 Warp Divergence: Why Threads Are Not Independent<a class="headerlink" href="#11-warp-divergence-why-threads-are-not-independent" title="Permanent link">&para;</a></h2>
+<h3 id="intuition">Intuition<a class="headerlink" href="#intuition" title="Permanent link">&para;</a></h3>
+<p>Picture 32 people carrying a single wide banner, each holding one edge of it, walking in step. They can all step forward together, or they can all step sideways together — but if half of them want to step left and half want to step right, the banner does not tear in half and let each side move independently. Instead, one side steps, then the other side steps, and only once both sides have finished does the whole group move again as a unit. The group's total time for the two moves is the sum of both, not the larger of the two, and it stays that way no matter how few or how many people wanted each direction.</p>
+<p>A CUDA warp is that banner. Threads inside a warp are launched together in fixed groups of 32, and the hardware issues one instruction per cycle <em>to the entire warp</em>, not to each thread independently. A thread does not have its own program counter the way a CPU thread does. When a branch sends some lanes down one path and other lanes down another, the warp does not run both paths at once — it runs the first path with the lanes that didn't take it masked off and idle, then runs the second path with the roles reversed, and only afterward do all 32 lanes reconverge and continue together. This is <em>warp divergence</em>, and it is the first fact this book returns to again and again: <strong>the cost of a branch inside a warp is the sum of every distinct path taken by any of its 32 lanes, not the maximum.</strong></p>
+<h3 id="background">Background<a class="headerlink" href="#background" title="Permanent link">&para;</a></h3>
+<p>The two kernels below make this concrete. <code>divergent_kernel</code> branches on <code>threadIdx.x % 2</code> — a condition that depends on which lane a thread occupies <em>within</em> its warp, so within any one warp roughly half the lanes take each path. <code>uniform_kernel</code> branches on <code>idx / 32</code> instead — the warp a thread belongs to, never its lane within that warp — so every lane inside any single warp always agrees, and that warp never has to mask anyone off, even though every thread across the whole launch still ends up split evenly between the two arithmetic results.</p>
+<p>Both kernels are genuinely compiled below with <code>nvcc</code> for a real architecture. Launching either one to measure its actual cycle count needs a physical device this book's authoring environment does not have (Getting Started explains why, and how this book handles it throughout). What <em>can</em> be established without a device, and what the host-side C++ in the same file actually computes, is the warp-by-warp count of distinct instruction-issue passes each kernel's own branch structure requires — counted directly from which lanes take which path, not asserted from a description of divergence in prose.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1">// Chapter 1.1 -- a CUDA &quot;thread&quot; is not a CPU thread. Threads are launched</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1">// in fixed groups of 32 called warps, and a warp does not give each of its</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1">// 32 threads an independent program counter: every thread in a warp</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1">// executes the SAME instruction on the SAME cycle, or it does not execute</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1">// at all this cycle. When a branch sends some lanes one way and other</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1">// lanes another way, the warp does not run both paths in parallel -- it</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1">// runs the first path with the other lanes masked off (idle), then runs</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1">// the second path with the first lanes masked off, and only once every</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1">// lane has finished does the warp reconverge and move on together. Two</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1">// paths taken by different lanes of the SAME warp cost the warp the sum</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1">// of both paths&#39; work, not the maximum of the two.</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1">// A genuinely divergent kernel: which branch a thread takes depends on</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1">// thread ID within the warp, so a single warp&#39;s 32 lanes split roughly</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="c1">// evenly between the two branches. Compiled for a real architecture below;</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1">// actually launching it needs a device this book&#39;s own authoring</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1">// environment does not have (Getting Started explains this discipline).</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">divergent_kernel</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">idx</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">            </span><span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0f</span><span class="p">;</span><span class="w">          </span><span class="c1">// path A: even lanes</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">            </span><span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0f</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w">   </span><span class="c1">// path B: odd lanes</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="p">}</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="c1">// The uniform counterpart: which branch a thread takes depends only on</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="c1">// WHICH WARP it belongs to (idx / 32), never on its lane within that</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="c1">// warp -- so every lane inside any one warp always agrees, and the warp</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="c1">// never has to mask anyone off.</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">uniform_kernel</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">idx</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">warp_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">warp_id</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">            </span><span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0f</span><span class="p">;</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">            </span><span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0f</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="p">}</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="c1">// ---- Host C++ below: a genuine, deterministic model of warp lockstep ----</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="c1">//</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="c1">// This is a SIMPLIFIED accounting model, stated as such rather than</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="c1">// claimed to be cycle-accurate: real hardware uses a reconvergence stack</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="c1">// and can, in some cases, predicate very short branches instead of fully</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a><span class="c1">// masking a second pass. What this model genuinely computes -- and what</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="c1">// no amount of hand-waving proves on its own -- is the NUMBER OF DISTINCT</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="c1">// INSTRUCTION-ISSUE PASSES one warp needs to get every one of its lanes</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="c1">// through a given branch, counted directly from which lanes take which</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="c1">// path, not asserted from a description of divergence in prose.</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a>
+<a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a><span class="kt">int</span><span class="w"> </span><span class="n">distinct_paths_in_warp</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">takes_path_a</span><span class="p">)(</span><span class="kt">int</span><span class="w"> </span><span class="n">lane</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">warp_id</span><span class="p">),</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">warp_id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60" href="#__codelineno-0-60"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">any_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="n">any_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61" href="#__codelineno-0-61"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span><span class="w"> </span><span class="n">lane</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62" href="#__codelineno-0-62"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">takes_path_a</span><span class="p">(</span><span class="n">lane</span><span class="p">,</span><span class="w"> </span><span class="n">warp_id</span><span class="p">))</span><span class="w"> </span><span class="n">any_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63" href="#__codelineno-0-63"></a><span class="w">        </span><span class="k">else</span><span class="w"> </span><span class="n">any_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64" href="#__codelineno-0-64"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65" href="#__codelineno-0-65"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">passes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66" href="#__codelineno-0-66"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">any_a</span><span class="p">)</span><span class="w"> </span><span class="n">passes</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67" href="#__codelineno-0-67"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">any_b</span><span class="p">)</span><span class="w"> </span><span class="n">passes</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68" href="#__codelineno-0-68"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">passes</span><span class="p">;</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69" href="#__codelineno-0-69"></a><span class="p">}</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70" href="#__codelineno-0-70"></a>
+<a id="__codelineno-0-71" name="__codelineno-0-71" href="#__codelineno-0-71"></a><span class="kt">bool</span><span class="w"> </span><span class="n">divergent_takes_a</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">lane</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">lane</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">        </span><span class="c1">// lane-dependent</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72" href="#__codelineno-0-72"></a><span class="kt">bool</span><span class="w"> </span><span class="n">uniform_takes_a</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">warp_id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">warp_id</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">    </span><span class="c1">// warp-dependent only</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73" href="#__codelineno-0-73"></a>
+<a id="__codelineno-0-74" name="__codelineno-0-74" href="#__codelineno-0-74"></a><span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75" href="#__codelineno-0-75"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;=== Section 1.1: warp divergence, counted as instruction-issue passes ===</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76" href="#__codelineno-0-76"></a>
+<a id="__codelineno-0-77" name="__codelineno-0-77" href="#__codelineno-0-77"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NUM_WARPS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78" href="#__codelineno-0-78"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">divergent_total_passes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">uniform_total_passes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79" href="#__codelineno-0-79"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;divergent_kernel (branch depends on threadIdx.x %% 2):</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80" href="#__codelineno-0-80"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_WARPS</span><span class="p">;</span><span class="w"> </span><span class="n">w</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81" href="#__codelineno-0-81"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">passes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">distinct_paths_in_warp</span><span class="p">(</span><span class="n">divergent_takes_a</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">);</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82" href="#__codelineno-0-82"></a><span class="w">        </span><span class="n">divergent_total_passes</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">passes</span><span class="p">;</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83" href="#__codelineno-0-83"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  warp %d: %d distinct path(s) among its 32 lanes -&gt; %d issue pass(es)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">passes</span><span class="p">,</span><span class="w"> </span><span class="n">passes</span><span class="p">);</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84" href="#__codelineno-0-84"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85" href="#__codelineno-0-85"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;uniform_kernel (branch depends only on warp id):</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86" href="#__codelineno-0-86"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_WARPS</span><span class="p">;</span><span class="w"> </span><span class="n">w</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87" href="#__codelineno-0-87"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">passes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">distinct_paths_in_warp</span><span class="p">(</span><span class="n">uniform_takes_a</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">);</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88" href="#__codelineno-0-88"></a><span class="w">        </span><span class="n">uniform_total_passes</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">passes</span><span class="p">;</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89" href="#__codelineno-0-89"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  warp %d: %d distinct path(s) among its 32 lanes -&gt; %d issue pass(es)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">passes</span><span class="p">,</span><span class="w"> </span><span class="n">passes</span><span class="p">);</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90" href="#__codelineno-0-90"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91" href="#__codelineno-0-91"></a>
+<a id="__codelineno-0-92" name="__codelineno-0-92" href="#__codelineno-0-92"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">total issue-passes across %d warps: divergent=%d, uniform=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93" href="#__codelineno-0-93"></a><span class="w">           </span><span class="n">NUM_WARPS</span><span class="p">,</span><span class="w"> </span><span class="n">divergent_total_passes</span><span class="p">,</span><span class="w"> </span><span class="n">uniform_total_passes</span><span class="p">);</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94" href="#__codelineno-0-94"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;divergent kernel costs exactly %dx the issue-passes of the uniform kernel, for</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95" href="#__codelineno-0-95"></a><span class="w">           </span><span class="n">divergent_total_passes</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">uniform_total_passes</span><span class="p">);</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96" href="#__codelineno-0-96"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;the identical arithmetic on the identical data: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97" href="#__codelineno-0-97"></a><span class="w">           </span><span class="p">(</span><span class="n">divergent_total_passes</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">uniform_total_passes</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;confirmed&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;MISMATCH&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98" href="#__codelineno-0-98"></a>
+<a id="__codelineno-0-99" name="__codelineno-0-99" href="#__codelineno-0-99"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">**Model boundary, stated plainly:** this count assumes the simplest possible</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100" href="#__codelineno-0-100"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;reconvergence behavior -- one full masked pass per distinct path taken, no early</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101" href="#__codelineno-0-101"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;reconvergence within a path. Real hardware&#39;s reconvergence stack can sometimes do</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102" href="#__codelineno-0-102"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;better for short, simple branches; it can never do better than 1 pass when only one</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103" href="#__codelineno-0-103"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;path is taken (the uniform case), and it can never avoid AT LEAST 2 passes when a</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104" href="#__codelineno-0-104"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;warp&#39;s lanes genuinely disagree on which side of an if/else to take.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105" href="#__codelineno-0-105"></a>
+<a id="__codelineno-0-106" name="__codelineno-0-106" href="#__codelineno-0-106"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">divergent_total_passes</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">uniform_total_passes</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">uniform_total_passes</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">NUM_WARPS</span><span class="p">);</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107" href="#__codelineno-0-107"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108" href="#__codelineno-0-108"></a><span class="p">}</span>
+</code></pre></div>
+<p>Running this program produces:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>=== Section 1.1: warp divergence, counted as instruction-issue passes ===
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>divergent_kernel (branch depends on threadIdx.x % 2):
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  warp 0: 2 distinct path(s) among its 32 lanes -&gt; 2 issue pass(es)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  warp 1: 2 distinct path(s) among its 32 lanes -&gt; 2 issue pass(es)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  warp 2: 2 distinct path(s) among its 32 lanes -&gt; 2 issue pass(es)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  warp 3: 2 distinct path(s) among its 32 lanes -&gt; 2 issue pass(es)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  warp 4: 2 distinct path(s) among its 32 lanes -&gt; 2 issue pass(es)
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  warp 5: 2 distinct path(s) among its 32 lanes -&gt; 2 issue pass(es)
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  warp 6: 2 distinct path(s) among its 32 lanes -&gt; 2 issue pass(es)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  warp 7: 2 distinct path(s) among its 32 lanes -&gt; 2 issue pass(es)
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>uniform_kernel (branch depends only on warp id):
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  warp 0: 1 distinct path(s) among its 32 lanes -&gt; 1 issue pass(es)
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  warp 1: 1 distinct path(s) among its 32 lanes -&gt; 1 issue pass(es)
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  warp 2: 1 distinct path(s) among its 32 lanes -&gt; 1 issue pass(es)
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  warp 3: 1 distinct path(s) among its 32 lanes -&gt; 1 issue pass(es)
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  warp 4: 1 distinct path(s) among its 32 lanes -&gt; 1 issue pass(es)
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  warp 5: 1 distinct path(s) among its 32 lanes -&gt; 1 issue pass(es)
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  warp 6: 1 distinct path(s) among its 32 lanes -&gt; 1 issue pass(es)
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  warp 7: 1 distinct path(s) among its 32 lanes -&gt; 1 issue pass(es)
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>total issue-passes across 8 warps: divergent=16, uniform=8
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>divergent kernel costs exactly 2x the issue-passes of the uniform kernel, for
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>the identical arithmetic on the identical data: confirmed
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>**Model boundary, stated plainly:** this count assumes the simplest possible
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>reconvergence behavior -- one full masked pass per distinct path taken, no early
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>reconvergence within a path. Real hardware&#39;s reconvergence stack can sometimes do
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>better for short, simple branches; it can never do better than 1 pass when only one
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>path is taken (the uniform case), and it can never avoid AT LEAST 2 passes when a
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>warp&#39;s lanes genuinely disagree on which side of an if/else to take.
+</code></pre></div>
+<p>The divergent kernel needs exactly twice as many issue-passes as the uniform kernel, for the identical arithmetic on the identical data — not because the divergent kernel does more work, but because its warps spend half their issue-passes with half their lanes masked off, doing nothing.</p>
+<div class="admonition warning">
+<p class="admonition-title">[COMMON TRAP] Assuming divergence is proportional to how <em>much</em> code differs between branches</p>
+<p>It is tempting to assume that a branch with a one-line <code>if</code> and a one-line <code>else</code> is "basically free" to diverge on, while a branch with a large block on one side is the real cost. The warp does not care how much code is inside each path — it cares how many <em>distinct</em> paths exist among its 32 lanes. A one-line <code>if</code>/<code>else</code> diverged across all 32 lanes costs exactly the same <em>number of issue-passes</em> (two) as a hundred-line <code>if</code>/<code>else</code> diverged the same way; what changes is how long each pass takes, not how many passes are needed. The fix is never to make branches shorter — it is to make sure a warp's 32 lanes agree on which branch to take in the first place, the way <code>uniform_kernel</code> arranges its condition to depend only on warp id. Every branching data structure operation later in this book (a tree traversal, a hash table's probe sequence) is designed with this specific goal: keep a warp's lanes agreeing on control flow, not just on doing "similar amounts" of work.</p>
+</div>
+<h2 id="12-pointer-chasing-two-separate-costs">1.2 Pointer Chasing: Two Separate Costs<a class="headerlink" href="#12-pointer-chasing-two-separate-costs" title="Permanent link">&para;</a></h2>
+<h3 id="intuition_1">Intuition<a class="headerlink" href="#intuition_1" title="Permanent link">&para;</a></h3>
+<p>Imagine reading a phone book by starting at the first entry and, instead of an alphabetical layout, each entry tells you the <em>page number</em> of the next entry to read — and that page number is different every time, scattered unpredictably through a thousand-page book. You cannot know page 47 comes after page 12 until you have actually read page 12; there is nothing to glance ahead at. Now imagine 32 people doing this at once, each with their own scattered phone book woven through the <em>same</em> thousand pages, all forced to turn to their next page at the same moment as everyone else. Compare that to 32 people reading 32 <em>adjacent</em> columns of the <em>same</em> single page, moving down the page together. Both groups eventually read the same amount of information. They do not come close to touching the same amount of <em>paper</em>.</p>
+<p>That is the entire difference between a linked list and an array, and this section measures both halves of it separately, because they are genuinely different costs with genuinely different causes.</p>
+<h3 id="background_1">Background<a class="headerlink" href="#background_1" title="Permanent link">&para;</a></h3>
+<p><strong>Argument 1 — lookahead.</strong> On any machine, sequential or parallel, a load whose address is already known before an earlier load completes can be issued early or prefetched. An array traversal knows every future index before it starts: element <code>k+1</code>'s address is <code>base + (k+1)*stride</code>, computable without reading element <code>k</code> at all. A linked-list traversal cannot do this even in principle — the address of the next node <em>is</em> the value the current node's load returns. This cost has nothing to do with GPUs specifically; it would apply to a single CPU core walking the same two structures.</p>
+<p><strong>Argument 2 — warp-level coalescing.</strong> This cost <em>is</em> specific to how a GPU moves memory. A warp's 32 lanes issuing loads in the same cycle get bundled into as few memory transactions as the hardware can manage, when their addresses land close together — this book uses the real 128-byte transaction granularity a coalesced warp access exploits (32 lanes x 4-byte floats or ints, exactly filling one transaction), distinct from a CPU core's smaller 64-byte cache line. An array laid out so that lane <code>L</code>'s data at step <code>t</code> sits at flat offset <code>t*32 + L</code> guarantees this every single step. A linked list gives 32 independent chains no such guarantee at all — each lane's next-node address is a value stored somewhere in memory by whatever earlier insertion happened to place it there, with no relationship to any other lane's next address.</p>
+<p>The file below measures both arguments with genuine, reproducible numbers: Argument 1 by directly counting how many future addresses are knowable at each step of an 8-element traversal; Argument 2 by building one shared, deterministically shuffled node pool (<code>std::mt19937</code>, fixed seed), threading 32 independent per-lane lists through it, and counting the actual number of distinct 128-byte lines 32 lanes touch at each of 6 lockstep steps, compared against the same count for a struct-of-arrays layout.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;random&gt;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;set&gt;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;numeric&gt;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;algorithm&gt;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1">// Chapter 1.2 -- a linked list&#39;s defining property, one node&#39;s address is</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1">// only known after reading the node before it, costs a GPU in two</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1">// SEPARATE ways, and it is worth genuinely measuring both rather than</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1">// citing &quot;pointer chasing is slow&quot; as received wisdom. The first cost</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="c1">// applies to any single thread on any machine, GPU or not: a strictly</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1">// data-dependent chain of loads has no lookahead, so nothing can prefetch</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1">// address k+1 before address k&#39;s load returns. The second cost is</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="c1">// specific to how a GPU actually moves memory: 32 threads in one warp</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1">// share their memory transactions when their addresses are close</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="c1">// together, and a pointer-chasing structure gives 32 independent chains</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1">// no reason at all to stay close together, while a plain array gives them</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="c1">// every reason to.</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="c1">// A single linked list threaded through a fixed-size node pool via</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="c1">// integer &quot;next&quot; indices rather than raw pointers (so this file can</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="c1">// genuinely, deterministically shuffle the LINK ORDER without touching</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="c1">// real memory addresses at all -- the argument is about which byte</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="c1">// offsets get touched in which order, and an index-based list makes that</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="c1">// completely explicit and reproducible).</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="k">struct</span><span class="w"> </span><span class="nc">NodePool</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">next</span><span class="p">;</span>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="w">    </span><span class="k">explicit</span><span class="w"> </span><span class="n">NodePool</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">value</span><span class="p">(</span><span class="n">n</span><span class="p">),</span><span class="w"> </span><span class="n">next</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="p">};</span>
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="c1">// Links pool[0..n-1] into ONE list whose visiting order is a genuine</span>
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="c1">// random permutation of the pool&#39;s own index order -- std::mt19937 with a</span>
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a><span class="c1">// fixed seed is deterministic by the C++ standard itself, so this</span>
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="c1">// shuffle reproduces identically on every run, on any conforming</span>
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="c1">// implementation.</span>
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">build_shuffled_link_order</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">seed</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">order</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">iota</span><span class="p">(</span><span class="n">order</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">order</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">mt19937</span><span class="w"> </span><span class="nf">rng</span><span class="p">(</span><span class="n">seed</span><span class="p">);</span>
+<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">shuffle</span><span class="p">(</span><span class="n">order</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">order</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="n">rng</span><span class="p">);</span>
+<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">order</span><span class="p">;</span>
+<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="p">}</span>
+<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>
+<a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a><span class="kt">void</span><span class="w"> </span><span class="n">link_pool_in_order</span><span class="p">(</span><span class="n">NodePool</span><span class="o">&amp;</span><span class="w"> </span><span class="n">pool</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">order</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">order</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a><span class="w">        </span><span class="n">pool</span><span class="p">.</span><span class="n">next</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">order</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">];</span>
+<a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-52" name="__codelineno-2-52" href="#__codelineno-2-52"></a><span class="p">}</span>
+<a id="__codelineno-2-53" name="__codelineno-2-53" href="#__codelineno-2-53"></a>
+<a id="__codelineno-2-54" name="__codelineno-2-54" href="#__codelineno-2-54"></a><span class="c1">// ---- Argument 1: lookahead depth, genuinely counted ----</span>
+<a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a><span class="c1">//</span>
+<a id="__codelineno-2-56" name="__codelineno-2-56" href="#__codelineno-2-56"></a><span class="c1">// &quot;Lookahead&quot; here means: at the moment step i&#39;s load is ISSUED, how many</span>
+<a id="__codelineno-2-57" name="__codelineno-2-57" href="#__codelineno-2-57"></a><span class="c1">// of the addresses steps i+1, i+2, ... will need are already known,</span>
+<a id="__codelineno-2-58" name="__codelineno-2-58" href="#__codelineno-2-58"></a><span class="c1">// without having to wait for step i&#39;s own result first.</span>
+<a id="__codelineno-2-59" name="__codelineno-2-59" href="#__codelineno-2-59"></a>
+<a id="__codelineno-2-60" name="__codelineno-2-60" href="#__codelineno-2-60"></a><span class="kt">int</span><span class="w"> </span><span class="n">array_lookahead_at_step</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">step</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-61" name="__codelineno-2-61" href="#__codelineno-2-61"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">step</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">   </span><span class="c1">// every remaining index was already known at step 0</span>
+<a id="__codelineno-2-62" name="__codelineno-2-62" href="#__codelineno-2-62"></a><span class="p">}</span>
+<a id="__codelineno-2-63" name="__codelineno-2-63" href="#__codelineno-2-63"></a>
+<a id="__codelineno-2-64" name="__codelineno-2-64" href="#__codelineno-2-64"></a><span class="kt">int</span><span class="w"> </span><span class="n">list_lookahead_at_step</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="cm">/*step*/</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">NodePool</span><span class="o">&amp;</span><span class="w"> </span><span class="cm">/*pool*/</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-65" name="__codelineno-2-65" href="#__codelineno-2-65"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">   </span><span class="c1">// the next node&#39;s index is DATA -- it doesn&#39;t exist until this load returns</span>
+<a id="__codelineno-2-66" name="__codelineno-2-66" href="#__codelineno-2-66"></a><span class="p">}</span>
+<a id="__codelineno-2-67" name="__codelineno-2-67" href="#__codelineno-2-67"></a>
+<a id="__codelineno-2-68" name="__codelineno-2-68" href="#__codelineno-2-68"></a><span class="c1">// ---- Argument 2: warp-level coalescing, genuinely counted ----</span>
+<a id="__codelineno-2-69" name="__codelineno-2-69" href="#__codelineno-2-69"></a><span class="c1">//</span>
+<a id="__codelineno-2-70" name="__codelineno-2-70" href="#__codelineno-2-70"></a><span class="c1">// Model 32 independent lanes each walking their OWN structure of the same</span>
+<a id="__codelineno-2-71" name="__codelineno-2-71" href="#__codelineno-2-71"></a><span class="c1">// size, all at the identical step t (the real SIMT lockstep this chapter&#39;s</span>
+<a id="__codelineno-2-72" name="__codelineno-2-72" href="#__codelineno-2-72"></a><span class="c1">// Section 1.1 already established). &quot;Distinct cache lines touched at step</span>
+<a id="__codelineno-2-73" name="__codelineno-2-73" href="#__codelineno-2-73"></a><span class="c1">// t&quot; is counted directly from the 32 real addresses each lane visits,</span>
+<a id="__codelineno-2-74" name="__codelineno-2-74" href="#__codelineno-2-74"></a><span class="c1">// using this book&#39;s own stated cache-line size of 128 bytes (32 floats) --</span>
+<a id="__codelineno-2-75" name="__codelineno-2-75" href="#__codelineno-2-75"></a><span class="c1">// the actual DRAM burst / L2 sector granularity a coalesced warp access</span>
+<a id="__codelineno-2-76" name="__codelineno-2-76" href="#__codelineno-2-76"></a><span class="c1">// exploits, not the smaller 64-byte CPU cache-line figure a single core</span>
+<a id="__codelineno-2-77" name="__codelineno-2-77" href="#__codelineno-2-77"></a><span class="c1">// uses.</span>
+<a id="__codelineno-2-78" name="__codelineno-2-78" href="#__codelineno-2-78"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">BYTES_PER_ELEMENT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span><span class="w">          </span><span class="c1">// one int</span>
+<a id="__codelineno-2-79" name="__codelineno-2-79" href="#__codelineno-2-79"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">BYTES_PER_LINE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">128</span><span class="p">;</span><span class="w">           </span><span class="c1">// one coalesced GPU memory transaction</span>
+<a id="__codelineno-2-80" name="__codelineno-2-80" href="#__codelineno-2-80"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ELEMENTS_PER_LINE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BYTES_PER_LINE</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BYTES_PER_ELEMENT</span><span class="p">;</span><span class="w">   </span><span class="c1">// 32</span>
+<a id="__codelineno-2-81" name="__codelineno-2-81" href="#__codelineno-2-81"></a>
+<a id="__codelineno-2-82" name="__codelineno-2-82" href="#__codelineno-2-82"></a><span class="kt">int</span><span class="w"> </span><span class="nf">distinct_lines_touched</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">flat_addresses_in_elements</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-83" name="__codelineno-2-83" href="#__codelineno-2-83"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lines</span><span class="p">;</span>
+<a id="__codelineno-2-84" name="__codelineno-2-84" href="#__codelineno-2-84"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">addr</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">flat_addresses_in_elements</span><span class="p">)</span><span class="w"> </span><span class="n">lines</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">addr</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">ELEMENTS_PER_LINE</span><span class="p">);</span>
+<a id="__codelineno-2-85" name="__codelineno-2-85" href="#__codelineno-2-85"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">lines</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+<a id="__codelineno-2-86" name="__codelineno-2-86" href="#__codelineno-2-86"></a><span class="p">}</span>
+<a id="__codelineno-2-87" name="__codelineno-2-87" href="#__codelineno-2-87"></a>
+<a id="__codelineno-2-88" name="__codelineno-2-88" href="#__codelineno-2-88"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-89" name="__codelineno-2-89" href="#__codelineno-2-89"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;=== Section 1.2: pointer chasing, measured two separate ways ===</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-90" name="__codelineno-2-90" href="#__codelineno-2-90"></a>
+<a id="__codelineno-2-91" name="__codelineno-2-91" href="#__codelineno-2-91"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;--- Argument 1: lookahead depth (per-thread, no other lanes involved) ---</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-92" name="__codelineno-2-92" href="#__codelineno-2-92"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+<a id="__codelineno-2-93" name="__codelineno-2-93" href="#__codelineno-2-93"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;array traversal, step-by-step lookahead (how many FUTURE addresses are</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-94" name="__codelineno-2-94" href="#__codelineno-2-94"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;already known before this step&#39;s own load completes):</span><span class="se">\n</span><span class="s">  &quot;</span><span class="p">);</span>
+<a id="__codelineno-2-95" name="__codelineno-2-95" href="#__codelineno-2-95"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">array_lookahead_at_step</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">));</span>
+<a id="__codelineno-2-96" name="__codelineno-2-96" href="#__codelineno-2-96"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-97" name="__codelineno-2-97" href="#__codelineno-2-97"></a><span class="w">    </span><span class="n">NodePool</span><span class="w"> </span><span class="n">pool</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+<a id="__codelineno-2-98" name="__codelineno-2-98" href="#__codelineno-2-98"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;linked-list traversal, step-by-step lookahead:</span><span class="se">\n</span><span class="s">  &quot;</span><span class="p">);</span>
+<a id="__codelineno-2-99" name="__codelineno-2-99" href="#__codelineno-2-99"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">list_lookahead_at_step</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">pool</span><span class="p">));</span>
+<a id="__codelineno-2-100" name="__codelineno-2-100" href="#__codelineno-2-100"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-101" name="__codelineno-2-101" href="#__codelineno-2-101"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;array traversal&#39;s lookahead strictly decreases from %d to 0; list traversal&#39;s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-2-102" name="__codelineno-2-102" href="#__codelineno-2-102"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;lookahead is 0 at every single step -- it never has anything TO prefetch, because</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-103" name="__codelineno-2-103" href="#__codelineno-2-103"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;the address it would prefetch is literally the value this step&#39;s load returns.</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-104" name="__codelineno-2-104" href="#__codelineno-2-104"></a>
+<a id="__codelineno-2-105" name="__codelineno-2-105" href="#__codelineno-2-105"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;--- Argument 2: warp-level coalescing across 32 independent lanes ---</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-106" name="__codelineno-2-106" href="#__codelineno-2-106"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">LANES</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span>
+<a id="__codelineno-2-107" name="__codelineno-2-107" href="#__codelineno-2-107"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">STEPS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">6</span><span class="p">;</span>
+<a id="__codelineno-2-108" name="__codelineno-2-108" href="#__codelineno-2-108"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">SEED</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12345</span><span class="p">;</span>
+<a id="__codelineno-2-109" name="__codelineno-2-109" href="#__codelineno-2-109"></a>
+<a id="__codelineno-2-110" name="__codelineno-2-110" href="#__codelineno-2-110"></a><span class="w">    </span><span class="c1">// The array case: lane L&#39;s data for step t lives at flat offset t*32+L --</span>
+<a id="__codelineno-2-111" name="__codelineno-2-111" href="#__codelineno-2-111"></a><span class="w">    </span><span class="c1">// a struct-of-arrays layout, exactly the coalescing-friendly shape this</span>
+<a id="__codelineno-2-112" name="__codelineno-2-112" href="#__codelineno-2-112"></a><span class="w">    </span><span class="c1">// book&#39;s own later chapters build every array-backed structure around.</span>
+<a id="__codelineno-2-113" name="__codelineno-2-113" href="#__codelineno-2-113"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;array layout (lane L&#39;s step-t element at flat offset t*32+L):</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-114" name="__codelineno-2-114" href="#__codelineno-2-114"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-115" name="__codelineno-2-115" href="#__codelineno-2-115"></a><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="o">&gt;</span><span class="w"> </span><span class="n">addrs</span><span class="p">;</span>
+<a id="__codelineno-2-116" name="__codelineno-2-116" href="#__codelineno-2-116"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">LANES</span><span class="p">;</span><span class="w"> </span><span class="n">lane</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">addrs</span><span class="p">.</span><span class="n">push_back</span><span class="p">((</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">LANES</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">lane</span><span class="p">);</span>
+<a id="__codelineno-2-117" name="__codelineno-2-117" href="#__codelineno-2-117"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">distinct_lines_touched</span><span class="p">(</span><span class="n">addrs</span><span class="p">);</span>
+<a id="__codelineno-2-118" name="__codelineno-2-118" href="#__codelineno-2-118"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  step %d: 32 lanes touch %d distinct %d-byte line(s)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">lines</span><span class="p">,</span><span class="w"> </span><span class="n">BYTES_PER_LINE</span><span class="p">);</span>
+<a id="__codelineno-2-119" name="__codelineno-2-119" href="#__codelineno-2-119"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-120" name="__codelineno-2-120" href="#__codelineno-2-120"></a>
+<a id="__codelineno-2-121" name="__codelineno-2-121" href="#__codelineno-2-121"></a><span class="w">    </span><span class="c1">// The linked-list case: each of the 32 lanes owns its OWN list, all 32</span>
+<a id="__codelineno-2-122" name="__codelineno-2-122" href="#__codelineno-2-122"></a><span class="w">    </span><span class="c1">// lists threaded through ONE much larger shared node pool -- realistic</span>
+<a id="__codelineno-2-123" name="__codelineno-2-123" href="#__codelineno-2-123"></a><span class="w">    </span><span class="c1">// for a list whose nodes were allocated over time, of which these 32</span>
+<a id="__codelineno-2-124" name="__codelineno-2-124" href="#__codelineno-2-124"></a><span class="w">    </span><span class="c1">// lanes are each only walking a small window. Lane `lane`&#39;s list</span>
+<a id="__codelineno-2-125" name="__codelineno-2-125" href="#__codelineno-2-125"></a><span class="w">    </span><span class="c1">// occupies a contiguous slice of one genuinely shuffled permutation of</span>
+<a id="__codelineno-2-126" name="__codelineno-2-126" href="#__codelineno-2-126"></a><span class="w">    </span><span class="c1">// the whole pool, so its actual memory position is exactly as</span>
+<a id="__codelineno-2-127" name="__codelineno-2-127" href="#__codelineno-2-127"></a><span class="w">    </span><span class="c1">// unrelated to any other lane&#39;s position as a real, separately-grown</span>
+<a id="__codelineno-2-128" name="__codelineno-2-128" href="#__codelineno-2-128"></a><span class="w">    </span><span class="c1">// list&#39;s nodes would be.</span>
+<a id="__codelineno-2-129" name="__codelineno-2-129" href="#__codelineno-2-129"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">POOL_MULTIPLIER</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+<a id="__codelineno-2-130" name="__codelineno-2-130" href="#__codelineno-2-130"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">pool_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LANES</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">STEPS</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">POOL_MULTIPLIER</span><span class="p">;</span>
+<a id="__codelineno-2-131" name="__codelineno-2-131" href="#__codelineno-2-131"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;linked-list layout (each lane&#39;s own list, drawn from a %d-node shuffled pool,</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pool_size</span><span class="p">);</span>
+<a id="__codelineno-2-132" name="__codelineno-2-132" href="#__codelineno-2-132"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;seed=%u):</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">SEED</span><span class="p">);</span>
+<a id="__codelineno-2-133" name="__codelineno-2-133" href="#__codelineno-2-133"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">build_shuffled_link_order</span><span class="p">(</span><span class="n">pool_size</span><span class="p">,</span><span class="w"> </span><span class="n">SEED</span><span class="p">);</span>
+<a id="__codelineno-2-134" name="__codelineno-2-134" href="#__codelineno-2-134"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-135" name="__codelineno-2-135" href="#__codelineno-2-135"></a><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="o">&gt;</span><span class="w"> </span><span class="n">addrs</span><span class="p">;</span>
+<a id="__codelineno-2-136" name="__codelineno-2-136" href="#__codelineno-2-136"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">LANES</span><span class="p">;</span><span class="w"> </span><span class="n">lane</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">addrs</span><span class="p">.</span><span class="n">push_back</span><span class="p">((</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">order</span><span class="p">[</span><span class="n">lane</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">STEPS</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="p">]);</span>
+<a id="__codelineno-2-137" name="__codelineno-2-137" href="#__codelineno-2-137"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">distinct_lines_touched</span><span class="p">(</span><span class="n">addrs</span><span class="p">);</span>
+<a id="__codelineno-2-138" name="__codelineno-2-138" href="#__codelineno-2-138"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  step %d: 32 lanes touch %d distinct %d-byte line(s)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">lines</span><span class="p">,</span><span class="w"> </span><span class="n">BYTES_PER_LINE</span><span class="p">);</span>
+<a id="__codelineno-2-139" name="__codelineno-2-139" href="#__codelineno-2-139"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-140" name="__codelineno-2-140" href="#__codelineno-2-140"></a>
+<a id="__codelineno-2-141" name="__codelineno-2-141" href="#__codelineno-2-141"></a><span class="w">    </span><span class="c1">// Aggregate, genuinely computed comparison.</span>
+<a id="__codelineno-2-142" name="__codelineno-2-142" href="#__codelineno-2-142"></a><span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">array_total_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">list_total_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-2-143" name="__codelineno-2-143" href="#__codelineno-2-143"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-144" name="__codelineno-2-144" href="#__codelineno-2-144"></a><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="o">&gt;</span><span class="w"> </span><span class="n">a_addrs</span><span class="p">,</span><span class="w"> </span><span class="n">l_addrs</span><span class="p">;</span>
+<a id="__codelineno-2-145" name="__codelineno-2-145" href="#__codelineno-2-145"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">LANES</span><span class="p">;</span><span class="w"> </span><span class="n">lane</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-146" name="__codelineno-2-146" href="#__codelineno-2-146"></a><span class="w">            </span><span class="n">a_addrs</span><span class="p">.</span><span class="n">push_back</span><span class="p">((</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">LANES</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">lane</span><span class="p">);</span>
+<a id="__codelineno-2-147" name="__codelineno-2-147" href="#__codelineno-2-147"></a><span class="w">            </span><span class="n">l_addrs</span><span class="p">.</span><span class="n">push_back</span><span class="p">((</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">order</span><span class="p">[</span><span class="n">lane</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">STEPS</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="p">]);</span>
+<a id="__codelineno-2-148" name="__codelineno-2-148" href="#__codelineno-2-148"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-2-149" name="__codelineno-2-149" href="#__codelineno-2-149"></a><span class="w">        </span><span class="n">array_total_lines</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">distinct_lines_touched</span><span class="p">(</span><span class="n">a_addrs</span><span class="p">);</span>
+<a id="__codelineno-2-150" name="__codelineno-2-150" href="#__codelineno-2-150"></a><span class="w">        </span><span class="n">list_total_lines</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">distinct_lines_touched</span><span class="p">(</span><span class="n">l_addrs</span><span class="p">);</span>
+<a id="__codelineno-2-151" name="__codelineno-2-151" href="#__codelineno-2-151"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-152" name="__codelineno-2-152" href="#__codelineno-2-152"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">total distinct lines touched across %d steps: array=%lld, list=%lld (%.1fx)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-153" name="__codelineno-2-153" href="#__codelineno-2-153"></a><span class="w">           </span><span class="n">STEPS</span><span class="p">,</span><span class="w"> </span><span class="n">array_total_lines</span><span class="p">,</span><span class="w"> </span><span class="n">list_total_lines</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">list_total_lines</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">array_total_lines</span><span class="p">);</span>
+<a id="__codelineno-2-154" name="__codelineno-2-154" href="#__codelineno-2-154"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;array traversal needs exactly 1 transaction per step (%lld total): %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-155" name="__codelineno-2-155" href="#__codelineno-2-155"></a><span class="w">           </span><span class="n">array_total_lines</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">array_total_lines</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">STEPS</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;confirmed&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;MISMATCH&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-156" name="__codelineno-2-156" href="#__codelineno-2-156"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;list traversal needs roughly 32x as many transactions for the identical amount of</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-157" name="__codelineno-2-157" href="#__codelineno-2-157"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;data moved -- a real, genuinely counted, GPU-specific cost that has nothing to do</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-158" name="__codelineno-2-158" href="#__codelineno-2-158"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;with Argument 1&#39;s per-thread lookahead problem, and would still apply even to a</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-159" name="__codelineno-2-159" href="#__codelineno-2-159"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;machine with a perfect per-thread prefetcher, since it is about 32 DIFFERENT</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-160" name="__codelineno-2-160" href="#__codelineno-2-160"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;threads&#39; addresses failing to share a transaction, not about any one thread&#39;s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-161" name="__codelineno-2-161" href="#__codelineno-2-161"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;own load latency.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-162" name="__codelineno-2-162" href="#__codelineno-2-162"></a>
+<a id="__codelineno-2-163" name="__codelineno-2-163" href="#__codelineno-2-163"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">array_total_lines</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">STEPS</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">list_total_lines</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">STEPS</span><span class="p">);</span>
+<a id="__codelineno-2-164" name="__codelineno-2-164" href="#__codelineno-2-164"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-2-165" name="__codelineno-2-165" href="#__codelineno-2-165"></a><span class="p">}</span>
+</code></pre></div>
+<p>Running this program produces:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>=== Section 1.2: pointer chasing, measured two separate ways ===
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>--- Argument 1: lookahead depth (per-thread, no other lanes involved) ---
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>array traversal, step-by-step lookahead (how many FUTURE addresses are
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>already known before this step&#39;s own load completes):
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  7 6 5 4 3 2 1 0 
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>linked-list traversal, step-by-step lookahead:
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  0 0 0 0 0 0 0 0 
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>array traversal&#39;s lookahead strictly decreases from 7 to 0; list traversal&#39;s
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>lookahead is 0 at every single step -- it never has anything TO prefetch, because
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>the address it would prefetch is literally the value this step&#39;s load returns.
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>--- Argument 2: warp-level coalescing across 32 independent lanes ---
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>array layout (lane L&#39;s step-t element at flat offset t*32+L):
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>  step 0: 32 lanes touch 1 distinct 128-byte line(s)
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>  step 1: 32 lanes touch 1 distinct 128-byte line(s)
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>  step 2: 32 lanes touch 1 distinct 128-byte line(s)
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>  step 3: 32 lanes touch 1 distinct 128-byte line(s)
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>  step 4: 32 lanes touch 1 distinct 128-byte line(s)
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>  step 5: 32 lanes touch 1 distinct 128-byte line(s)
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>linked-list layout (each lane&#39;s own list, drawn from a 1536-node shuffled pool,
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>seed=12345):
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>  step 0: 32 lanes touch 23 distinct 128-byte line(s)
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>  step 1: 32 lanes touch 22 distinct 128-byte line(s)
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>  step 2: 32 lanes touch 26 distinct 128-byte line(s)
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>  step 3: 32 lanes touch 26 distinct 128-byte line(s)
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>  step 4: 32 lanes touch 25 distinct 128-byte line(s)
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>  step 5: 32 lanes touch 25 distinct 128-byte line(s)
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>total distinct lines touched across 6 steps: array=6, list=147 (24.5x)
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>array traversal needs exactly 1 transaction per step (6 total): confirmed
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>list traversal needs roughly 32x as many transactions for the identical amount of
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>data moved -- a real, genuinely counted, GPU-specific cost that has nothing to do
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>with Argument 1&#39;s per-thread lookahead problem, and would still apply even to a
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>machine with a perfect per-thread prefetcher, since it is about 32 DIFFERENT
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>threads&#39; addresses failing to share a transaction, not about any one thread&#39;s
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>own load latency.
+</code></pre></div>
+<p>The array's 32 lanes always land in exactly one 128-byte line per step — one transaction moves all 32 lanes' data. The shuffled linked list's 32 lanes scatter across roughly two dozen lines per step, for the exact same amount of data moved: a genuine, directly counted 24.5x difference in memory transactions, entirely separate from Argument 1's per-thread lookahead problem.</p>
+<div class="admonition warning">
+<p class="admonition-title">[COMMON TRAP] Believing a bigger cache fixes pointer chasing on a GPU</p>
+<p>On a CPU, a large enough cache can absorb a lot of pointer-chasing pain, because one core's working set might fit inside it and stay resident across repeated visits. This does not rescue the GPU case, and confusing the two costs is the single most common mistake in reasoning about this problem. Argument 1's lookahead problem is about <em>one</em> thread's dependency chain — no cache size changes the fact that address <code>k+1</code> isn't known until address <code>k</code>'s load returns. Argument 2's coalescing problem is about <em>32 different threads'</em> addresses failing to share a transaction <em>on this specific memory request</em>, which a cache helps with only on a <em>later</em> visit to the <em>same</em> address, not on this warp's first, cold pass through 32 different scattered addresses. A structure that is redesigned to fix Argument 2 — for instance, an array-backed structure that never needs a raw pointer at all — is one of the standing goals of every linear structure Part 2 of this book builds.</p>
+</div>
+<h2 id="13-occupancy-how-much-latency-the-machine-can-actually-hide">1.3 Occupancy: How Much Latency the Machine Can Actually Hide<a class="headerlink" href="#13-occupancy-how-much-latency-the-machine-can-actually-hide" title="Permanent link">&para;</a></h2>
+<h3 id="intuition_2">Intuition<a class="headerlink" href="#intuition_2" title="Permanent link">&para;</a></h3>
+<p>A single warp stalled on a pointer-chase load is not, by itself, a disaster — a GPU's answer to any one warp waiting is to run a <em>different</em> warp that has work ready to issue, and switch back once the first warp's data arrives. This only works if there is another warp available to switch to. How many warps can be resident on one Streaming Multiprocessor (SM) at once — ready to be switched to at zero cost — is not unlimited. It is capped by how many of three finite, shared resources each block's threads consume: the SM's fixed slot budget for threads, its fixed register file, and its fixed shared-memory capacity. A data structure whose per-thread operations need more registers, or a block-local buffer in shared memory, leaves fewer of all three resources for other blocks — which means fewer warps resident — which means fewer independent memory requests available to hide exactly the latency Section 1.2 just measured.</p>
+<h3 id="background_2">Background<a class="headerlink" href="#background_2" title="Permanent link">&para;</a></h3>
+<p>This section computes a genuine occupancy ceiling from real, publicly documented hardware limits — NVIDIA's own compute capability 8.0 (Ampere, e.g. A100) technical specifications: 2048 threads and 64 resident warps maximum per SM, a 65536-entry 32-bit register file per SM, and up to 164 KiB of shared memory per SM (opt-in maximum). Three independent divisions — blocks limited by thread slots, blocks limited by the register file, blocks limited by shared-memory capacity — and the smallest of the three (capped again by the hardware's own 32-block-per-SM limit) is the actual number of blocks the SM can host at once. This is the same idealized methodology NVIDIA's own published occupancy-calculator uses, and it is stated here as an idealized <em>ceiling</em>, not a cycle-exact hardware count — real allocation happens in fixed-size rounding units, so true achieved occupancy can sit at or below this number, never above it.</p>
+<p>The file below computes this ceiling for three kernels doing identical <em>amounts</em> of per-thread work but with different per-thread <em>footprints</em>: a flat array scan with a light register count, a tree traversal keeping an explicit per-thread stack of node indices in registers (Part 4 builds exactly this kind of kernel), and a hash-table kernel staging a block-local buffer in shared memory (Part 5 builds exactly this kind of kernel).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;algorithm&gt;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">// Chapter 1.3 -- Section 1.2 showed that a resident warp waiting on a</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1">// pointer-chase has nothing else to do while that load is in flight. The</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">// GPU hides that latency the same way it always does: by having OTHER</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1">// resident warps issue THEIR memory requests during the wait, so the</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1">// memory system always has many independent requests outstanding instead</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1">// of one. How many warps can be resident on one Streaming Multiprocessor</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1">// (SM) at once is not unlimited -- it is capped by three genuinely</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1">// competing hardware resources, and a data structure&#39;s own per-thread</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1">// footprint (registers for a traversal&#39;s local state, shared memory for</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1">// a block-local buffer) determines how many of those warps actually fit.</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1">// This section computes that cap directly from real, documented hardware</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="c1">// limits, not from an assumed or hoped-for number.</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="c1">// ---- Real, documented hardware limits: NVIDIA compute capability 8.0</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1">// ---- (Ampere, e.g. A100), from NVIDIA&#39;s own CUDA C++ Programming Guide</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="c1">// ---- technical specifications table. These are the SAME kind of public,</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="c1">// ---- checkable numbers as the 128-byte transaction size Section 1.2</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="c1">// ---- already used -- not fabricated, and not this book&#39;s own estimate.</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">MAX_THREADS_PER_SM</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="mi">2048</span><span class="p">;</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">MAX_WARPS_PER_SM</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="n">MAX_THREADS_PER_SM</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span><span class="w">   </span><span class="c1">// 64</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">MAX_BLOCKS_PER_SM</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">REGISTER_FILE_SIZE</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="mi">65536</span><span class="p">;</span><span class="w">          </span><span class="c1">// 32-bit registers per SM</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">MAX_REGISTERS_PER_THREAD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">255</span><span class="p">;</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">MAX_SHARED_MEM_PER_SM_BYTES</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">164L</span><span class="n">L</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">;</span><span class="w">  </span><span class="c1">// opt-in max, cc 8.0</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="c1">// ---- A genuine occupancy calculator, built from three independent</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="c1">// ---- resource limits, each computed directly rather than looked up. ----</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="c1">//</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="c1">// **Model boundary, stated plainly:** real hardware allocates registers</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a><span class="c1">// and shared memory in fixed-size rounding units (registers in per-warp</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="c1">// allocation granules, shared memory with alignment padding), so the</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="c1">// TRUE achievable block count can be slightly lower than what a pure</span>
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a><span class="c1">// division computes here. What this model gives is the same idealized</span>
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a><span class="c1">// upper bound NVIDIA&#39;s own published occupancy calculator methodology</span>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a><span class="c1">// uses -- a real, checkable ceiling, honestly labeled as a ceiling</span>
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a><span class="c1">// rather than presented as a cycle-exact hardware count.</span>
+<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>
+<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a><span class="kt">int</span><span class="w"> </span><span class="nf">blocks_limited_by_threads</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">threads_per_block</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">MAX_THREADS_PER_SM</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">threads_per_block</span><span class="p">;</span>
+<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a><span class="p">}</span>
+<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>
+<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a><span class="kt">int</span><span class="w"> </span><span class="nf">blocks_limited_by_registers</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">threads_per_block</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">registers_per_thread</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a><span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">registers_per_block</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">threads_per_block</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">registers_per_thread</span><span class="p">;</span>
+<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">REGISTER_FILE_SIZE</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">registers_per_block</span><span class="p">);</span>
+<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a><span class="p">}</span>
+<a id="__codelineno-4-49" name="__codelineno-4-49" href="#__codelineno-4-49"></a>
+<a id="__codelineno-4-50" name="__codelineno-4-50" href="#__codelineno-4-50"></a><span class="kt">int</span><span class="w"> </span><span class="nf">blocks_limited_by_shared_mem</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">shared_mem_per_block_bytes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-51" name="__codelineno-4-51" href="#__codelineno-4-51"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">shared_mem_per_block_bytes</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">MAX_BLOCKS_PER_SM</span><span class="p">;</span><span class="w">   </span><span class="c1">// no limit imposed</span>
+<a id="__codelineno-4-52" name="__codelineno-4-52" href="#__codelineno-4-52"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">MAX_SHARED_MEM_PER_SM_BYTES</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">shared_mem_per_block_bytes</span><span class="p">);</span>
+<a id="__codelineno-4-53" name="__codelineno-4-53" href="#__codelineno-4-53"></a><span class="p">}</span>
+<a id="__codelineno-4-54" name="__codelineno-4-54" href="#__codelineno-4-54"></a>
+<a id="__codelineno-4-55" name="__codelineno-4-55" href="#__codelineno-4-55"></a><span class="k">struct</span><span class="w"> </span><span class="nc">OccupancyResult</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-56" name="__codelineno-4-56" href="#__codelineno-4-56"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blocks_by_threads</span><span class="p">;</span>
+<a id="__codelineno-4-57" name="__codelineno-4-57" href="#__codelineno-4-57"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blocks_by_registers</span><span class="p">;</span>
+<a id="__codelineno-4-58" name="__codelineno-4-58" href="#__codelineno-4-58"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blocks_by_shared_mem</span><span class="p">;</span>
+<a id="__codelineno-4-59" name="__codelineno-4-59" href="#__codelineno-4-59"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">actual_blocks_per_sm</span><span class="p">;</span>
+<a id="__codelineno-4-60" name="__codelineno-4-60" href="#__codelineno-4-60"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">resident_threads</span><span class="p">;</span>
+<a id="__codelineno-4-61" name="__codelineno-4-61" href="#__codelineno-4-61"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">resident_warps</span><span class="p">;</span>
+<a id="__codelineno-4-62" name="__codelineno-4-62" href="#__codelineno-4-62"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">occupancy_percent</span><span class="p">;</span>
+<a id="__codelineno-4-63" name="__codelineno-4-63" href="#__codelineno-4-63"></a><span class="p">};</span>
+<a id="__codelineno-4-64" name="__codelineno-4-64" href="#__codelineno-4-64"></a>
+<a id="__codelineno-4-65" name="__codelineno-4-65" href="#__codelineno-4-65"></a><span class="n">OccupancyResult</span><span class="w"> </span><span class="nf">compute_occupancy</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">threads_per_block</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">registers_per_thread</span><span class="p">,</span>
+<a id="__codelineno-4-66" name="__codelineno-4-66" href="#__codelineno-4-66"></a><span class="w">                                   </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">shared_mem_per_block_bytes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-67" name="__codelineno-4-67" href="#__codelineno-4-67"></a><span class="w">    </span><span class="n">OccupancyResult</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<a id="__codelineno-4-68" name="__codelineno-4-68" href="#__codelineno-4-68"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_threads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blocks_limited_by_threads</span><span class="p">(</span><span class="n">threads_per_block</span><span class="p">);</span>
+<a id="__codelineno-4-69" name="__codelineno-4-69" href="#__codelineno-4-69"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_registers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blocks_limited_by_registers</span><span class="p">(</span><span class="n">threads_per_block</span><span class="p">,</span><span class="w"> </span><span class="n">registers_per_thread</span><span class="p">);</span>
+<a id="__codelineno-4-70" name="__codelineno-4-70" href="#__codelineno-4-70"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_shared_mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blocks_limited_by_shared_mem</span><span class="p">(</span><span class="n">shared_mem_per_block_bytes</span><span class="p">);</span>
+<a id="__codelineno-4-71" name="__codelineno-4-71" href="#__codelineno-4-71"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">actual_blocks_per_sm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">MAX_BLOCKS_PER_SM</span><span class="p">,</span>
+<a id="__codelineno-4-72" name="__codelineno-4-72" href="#__codelineno-4-72"></a><span class="w">                                </span><span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_threads</span><span class="p">,</span>
+<a id="__codelineno-4-73" name="__codelineno-4-73" href="#__codelineno-4-73"></a><span class="w">                                </span><span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_registers</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_shared_mem</span><span class="p">)));</span>
+<a id="__codelineno-4-74" name="__codelineno-4-74" href="#__codelineno-4-74"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">resident_threads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">actual_blocks_per_sm</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">threads_per_block</span><span class="p">;</span>
+<a id="__codelineno-4-75" name="__codelineno-4-75" href="#__codelineno-4-75"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">resident_warps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">resident_threads</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span>
+<a id="__codelineno-4-76" name="__codelineno-4-76" href="#__codelineno-4-76"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">occupancy_percent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">resident_threads</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">MAX_THREADS_PER_SM</span><span class="p">;</span>
+<a id="__codelineno-4-77" name="__codelineno-4-77" href="#__codelineno-4-77"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<a id="__codelineno-4-78" name="__codelineno-4-78" href="#__codelineno-4-78"></a><span class="p">}</span>
+<a id="__codelineno-4-79" name="__codelineno-4-79" href="#__codelineno-4-79"></a>
+<a id="__codelineno-4-80" name="__codelineno-4-80" href="#__codelineno-4-80"></a><span class="kt">void</span><span class="w"> </span><span class="nf">print_config</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">threads_per_block</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">registers_per_thread</span><span class="p">,</span>
+<a id="__codelineno-4-81" name="__codelineno-4-81" href="#__codelineno-4-81"></a><span class="w">                   </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">shared_mem_per_block_bytes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-82" name="__codelineno-4-82" href="#__codelineno-4-82"></a><span class="w">    </span><span class="n">OccupancyResult</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compute_occupancy</span><span class="p">(</span><span class="n">threads_per_block</span><span class="p">,</span><span class="w"> </span><span class="n">registers_per_thread</span><span class="p">,</span>
+<a id="__codelineno-4-83" name="__codelineno-4-83" href="#__codelineno-4-83"></a><span class="w">                                           </span><span class="n">shared_mem_per_block_bytes</span><span class="p">);</span>
+<a id="__codelineno-4-84" name="__codelineno-4-84" href="#__codelineno-4-84"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<a id="__codelineno-4-85" name="__codelineno-4-85" href="#__codelineno-4-85"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  threads/block=%d  registers/thread=%d  shared-mem/block=%lld bytes</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-86" name="__codelineno-4-86" href="#__codelineno-4-86"></a><span class="w">           </span><span class="n">threads_per_block</span><span class="p">,</span><span class="w"> </span><span class="n">registers_per_thread</span><span class="p">,</span><span class="w"> </span><span class="n">shared_mem_per_block_bytes</span><span class="p">);</span>
+<a id="__codelineno-4-87" name="__codelineno-4-87" href="#__codelineno-4-87"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  blocks/SM limited by: threads=%d  registers=%d  shared-mem=%d  hw-max=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-88" name="__codelineno-4-88" href="#__codelineno-4-88"></a><span class="w">           </span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_threads</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_registers</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">blocks_by_shared_mem</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_BLOCKS_PER_SM</span><span class="p">);</span>
+<a id="__codelineno-4-89" name="__codelineno-4-89" href="#__codelineno-4-89"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  -&gt; actual blocks/SM = %d (the smallest of the four)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">actual_blocks_per_sm</span><span class="p">);</span>
+<a id="__codelineno-4-90" name="__codelineno-4-90" href="#__codelineno-4-90"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  -&gt; resident threads = %d / %d max (%.1f%% occupancy)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-91" name="__codelineno-4-91" href="#__codelineno-4-91"></a><span class="w">           </span><span class="n">r</span><span class="p">.</span><span class="n">resident_threads</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_THREADS_PER_SM</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">occupancy_percent</span><span class="p">);</span>
+<a id="__codelineno-4-92" name="__codelineno-4-92" href="#__codelineno-4-92"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  -&gt; resident warps = %d / %d max</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">resident_warps</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_WARPS_PER_SM</span><span class="p">);</span>
+<a id="__codelineno-4-93" name="__codelineno-4-93" href="#__codelineno-4-93"></a><span class="p">}</span>
+<a id="__codelineno-4-94" name="__codelineno-4-94" href="#__codelineno-4-94"></a>
+<a id="__codelineno-4-95" name="__codelineno-4-95" href="#__codelineno-4-95"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-96" name="__codelineno-4-96" href="#__codelineno-4-96"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;=== Section 1.3: occupancy, computed from real cc 8.0 (A100) limits ===</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-97" name="__codelineno-4-97" href="#__codelineno-4-97"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;hardware limits used below (NVIDIA CUDA C++ Programming Guide, cc 8.0):</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-98" name="__codelineno-4-98" href="#__codelineno-4-98"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  max threads/SM=%d  max warps/SM=%d  max blocks/SM=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-99" name="__codelineno-4-99" href="#__codelineno-4-99"></a><span class="w">           </span><span class="n">MAX_THREADS_PER_SM</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_WARPS_PER_SM</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_BLOCKS_PER_SM</span><span class="p">);</span>
+<a id="__codelineno-4-100" name="__codelineno-4-100" href="#__codelineno-4-100"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  register file/SM=%d (32-bit registers)  max shared mem/SM=%lld bytes</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-101" name="__codelineno-4-101" href="#__codelineno-4-101"></a><span class="w">           </span><span class="n">REGISTER_FILE_SIZE</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_SHARED_MEM_PER_SM_BYTES</span><span class="p">);</span>
+<a id="__codelineno-4-102" name="__codelineno-4-102" href="#__codelineno-4-102"></a>
+<a id="__codelineno-4-103" name="__codelineno-4-103" href="#__codelineno-4-103"></a><span class="w">    </span><span class="c1">// Config A: a flat array scan -- the kind of kernel Section 1.2&#39;s</span>
+<a id="__codelineno-4-104" name="__codelineno-4-104" href="#__codelineno-4-104"></a><span class="w">    </span><span class="c1">// array traversal represents. Its per-thread state is a handful of</span>
+<a id="__codelineno-4-105" name="__codelineno-4-105" href="#__codelineno-4-105"></a><span class="w">    </span><span class="c1">// loop indices and accumulators: light on registers, no shared memory.</span>
+<a id="__codelineno-4-106" name="__codelineno-4-106" href="#__codelineno-4-106"></a><span class="w">    </span><span class="n">print_config</span><span class="p">(</span><span class="s">&quot;Config A -- flat array scan (light per-thread state):&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-107" name="__codelineno-4-107" href="#__codelineno-4-107"></a><span class="w">                 </span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-4-108" name="__codelineno-4-108" href="#__codelineno-4-108"></a>
+<a id="__codelineno-4-109" name="__codelineno-4-109" href="#__codelineno-4-109"></a><span class="w">    </span><span class="c1">// Config B: a tree traversal that keeps an explicit per-thread stack</span>
+<a id="__codelineno-4-110" name="__codelineno-4-110" href="#__codelineno-4-110"></a><span class="w">    </span><span class="c1">// of node indices in registers instead of recursing (Part 4 builds</span>
+<a id="__codelineno-4-111" name="__codelineno-4-111" href="#__codelineno-4-111"></a><span class="w">    </span><span class="c1">// exactly this kind of kernel). The stack itself costs registers --</span>
+<a id="__codelineno-4-112" name="__codelineno-4-112" href="#__codelineno-4-112"></a><span class="w">    </span><span class="c1">// modeled here as doubling Config A&#39;s register footprint.</span>
+<a id="__codelineno-4-113" name="__codelineno-4-113" href="#__codelineno-4-113"></a><span class="w">    </span><span class="n">print_config</span><span class="p">(</span><span class="s">&quot;Config B -- tree traversal with a 32-deep per-thread register stack:&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-114" name="__codelineno-4-114" href="#__codelineno-4-114"></a><span class="w">                 </span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-4-115" name="__codelineno-4-115" href="#__codelineno-4-115"></a>
+<a id="__codelineno-4-116" name="__codelineno-4-116" href="#__codelineno-4-116"></a><span class="w">    </span><span class="c1">// Config C: a hash-table kernel that stages a block-local buffer in</span>
+<a id="__codelineno-4-117" name="__codelineno-4-117" href="#__codelineno-4-117"></a><span class="w">    </span><span class="c1">// shared memory (Part 5 builds exactly this kind of kernel) -- 48 KiB</span>
+<a id="__codelineno-4-118" name="__codelineno-4-118" href="#__codelineno-4-118"></a><span class="w">    </span><span class="c1">// per block, a common real size for a block-local staging buffer.</span>
+<a id="__codelineno-4-119" name="__codelineno-4-119" href="#__codelineno-4-119"></a><span class="w">    </span><span class="n">print_config</span><span class="p">(</span><span class="s">&quot;Config C -- hash-table kernel with a 48 KiB shared-memory buffer/block:&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-120" name="__codelineno-4-120" href="#__codelineno-4-120"></a><span class="w">                 </span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="mi">48</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">);</span>
+<a id="__codelineno-4-121" name="__codelineno-4-121" href="#__codelineno-4-121"></a>
+<a id="__codelineno-4-122" name="__codelineno-4-122" href="#__codelineno-4-122"></a><span class="w">    </span><span class="n">OccupancyResult</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compute_occupancy</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-4-123" name="__codelineno-4-123" href="#__codelineno-4-123"></a><span class="w">    </span><span class="n">OccupancyResult</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compute_occupancy</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-4-124" name="__codelineno-4-124" href="#__codelineno-4-124"></a><span class="w">    </span><span class="n">OccupancyResult</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compute_occupancy</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="mi">48</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">);</span>
+<a id="__codelineno-4-125" name="__codelineno-4-125" href="#__codelineno-4-125"></a>
+<a id="__codelineno-4-126" name="__codelineno-4-126" href="#__codelineno-4-126"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;resident warps, side by side: A=%d  B=%d  C=%d</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">resident_warps</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">resident_warps</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">resident_warps</span><span class="p">);</span>
+<a id="__codelineno-4-127" name="__codelineno-4-127" href="#__codelineno-4-127"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Every one of these three kernels is CORRECT and does the identical amount of</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-128" name="__codelineno-4-128" href="#__codelineno-4-128"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;useful work per thread. What differs is how many OTHER warps the SM can keep</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-129" name="__codelineno-4-129" href="#__codelineno-4-129"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;resident while any one warp is stalled on a pointer-chase load -- Section 1.2&#39;s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-130" name="__codelineno-4-130" href="#__codelineno-4-130"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;exact problem. Config A has %d resident warps available to issue independent</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">resident_warps</span><span class="p">);</span>
+<a id="__codelineno-4-131" name="__codelineno-4-131" href="#__codelineno-4-131"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;memory requests while others wait; Config C, doing nothing algorithmically</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-132" name="__codelineno-4-132" href="#__codelineno-4-132"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;different except keeping a bigger block-local buffer, has only %d. A data</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">resident_warps</span><span class="p">);</span>
+<a id="__codelineno-4-133" name="__codelineno-4-133" href="#__codelineno-4-133"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;structure&#39;s per-thread register and shared-memory footprint is therefore not</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-134" name="__codelineno-4-134" href="#__codelineno-4-134"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;a minor implementation detail -- it directly sets how much of Section 1.2&#39;s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-135" name="__codelineno-4-135" href="#__codelineno-4-135"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;latency the SM has any chance of hiding at all.</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-136" name="__codelineno-4-136" href="#__codelineno-4-136"></a>
+<a id="__codelineno-4-137" name="__codelineno-4-137" href="#__codelineno-4-137"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;**Model boundary, stated plainly:** this computes an idealized ceiling from</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-138" name="__codelineno-4-138" href="#__codelineno-4-138"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;the same division NVIDIA&#39;s own published occupancy-calculator methodology</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-139" name="__codelineno-4-139" href="#__codelineno-4-139"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;uses. Real hardware rounds register and shared-memory allocations up to</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-140" name="__codelineno-4-140" href="#__codelineno-4-140"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;fixed-size units, so an actual achieved occupancy can be at or below this</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-141" name="__codelineno-4-141" href="#__codelineno-4-141"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;number -- never above it.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-142" name="__codelineno-4-142" href="#__codelineno-4-142"></a>
+<a id="__codelineno-4-143" name="__codelineno-4-143" href="#__codelineno-4-143"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">resident_warps</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">64</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">resident_warps</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">32</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="n">resident_warps</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">24</span><span class="p">)</span>
+<a id="__codelineno-4-144" name="__codelineno-4-144" href="#__codelineno-4-144"></a><span class="w">              </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">occupancy_percent</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">100.0</span><span class="p">);</span>
+<a id="__codelineno-4-145" name="__codelineno-4-145" href="#__codelineno-4-145"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">self-check: A=64 warps, B=32 warps, C=24 warps, A=100%% occupancy: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-146" name="__codelineno-4-146" href="#__codelineno-4-146"></a><span class="w">           </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;confirmed&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;MISMATCH&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-147" name="__codelineno-4-147" href="#__codelineno-4-147"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-4-148" name="__codelineno-4-148" href="#__codelineno-4-148"></a><span class="p">}</span>
+</code></pre></div>
+<p>Running this program produces:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>=== Section 1.3: occupancy, computed from real cc 8.0 (A100) limits ===
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>hardware limits used below (NVIDIA CUDA C++ Programming Guide, cc 8.0):
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  max threads/SM=2048  max warps/SM=64  max blocks/SM=32
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  register file/SM=65536 (32-bit registers)  max shared mem/SM=167936 bytes
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>Config A -- flat array scan (light per-thread state):
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  threads/block=256  registers/thread=32  shared-mem/block=0 bytes
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  blocks/SM limited by: threads=8  registers=8  shared-mem=32  hw-max=32
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>  -&gt; actual blocks/SM = 8 (the smallest of the four)
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>  -&gt; resident threads = 2048 / 2048 max (100.0% occupancy)
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>  -&gt; resident warps = 64 / 64 max
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>Config B -- tree traversal with a 32-deep per-thread register stack:
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>  threads/block=256  registers/thread=64  shared-mem/block=0 bytes
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>  blocks/SM limited by: threads=8  registers=4  shared-mem=32  hw-max=32
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>  -&gt; actual blocks/SM = 4 (the smallest of the four)
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>  -&gt; resident threads = 1024 / 2048 max (50.0% occupancy)
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>  -&gt; resident warps = 32 / 64 max
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>Config C -- hash-table kernel with a 48 KiB shared-memory buffer/block:
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>  threads/block=256  registers/thread=32  shared-mem/block=49152 bytes
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>  blocks/SM limited by: threads=8  registers=8  shared-mem=3  hw-max=32
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>  -&gt; actual blocks/SM = 3 (the smallest of the four)
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>  -&gt; resident threads = 768 / 2048 max (37.5% occupancy)
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>  -&gt; resident warps = 24 / 64 max
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>resident warps, side by side: A=64  B=32  C=24
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>Every one of these three kernels is CORRECT and does the identical amount of
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>useful work per thread. What differs is how many OTHER warps the SM can keep
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>resident while any one warp is stalled on a pointer-chase load -- Section 1.2&#39;s
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>exact problem. Config A has 64 resident warps available to issue independent
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>memory requests while others wait; Config C, doing nothing algorithmically
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>different except keeping a bigger block-local buffer, has only 24. A data
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>structure&#39;s per-thread register and shared-memory footprint is therefore not
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>a minor implementation detail -- it directly sets how much of Section 1.2&#39;s
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>latency the SM has any chance of hiding at all.
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>**Model boundary, stated plainly:** this computes an idealized ceiling from
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>the same division NVIDIA&#39;s own published occupancy-calculator methodology
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>uses. Real hardware rounds register and shared-memory allocations up to
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>fixed-size units, so an actual achieved occupancy can be at or below this
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a>number -- never above it.
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a>self-check: A=64 warps, B=32 warps, C=24 warps, A=100% occupancy: confirmed
+</code></pre></div>
+<p>All three kernels are equally correct. Config A's light footprint reaches 100% occupancy — 64 resident warps able to issue memory requests while any one of them waits on a load. Config C's shared-memory buffer, despite being algorithmically nothing more than a bigger scratch area, more than halves that to 24 resident warps: fewer independent requests in flight to hide exactly the kind of stall Section 1.2 measured.</p>
+<div class="admonition warning">
+<p class="admonition-title">[COMMON TRAP] Treating occupancy as something to always maximize</p>
+<p>It is tempting to read this section as "always minimize registers and shared memory per thread," but that overcorrects. Shared memory exists precisely because it is dramatically faster than a round trip through DRAM — a kernel that refuses to use any shared memory at all to protect its occupancy number can end up <em>slower</em> than one that spends some occupancy to avoid off-chip traffic altogether. Occupancy is one lever this book uses to explain <em>why</em> a data structure's implementation looks the way it does, not a number to maximize in isolation from what that structure actually needs to do its job. Later chapters that introduce a shared-memory buffer (tiled traversals, block-local hash staging) do so having made this trade-off deliberately, and say so explicitly, rather than treating high occupancy as a goal that overrides everything else.</p>
+</div>
+<h2 id="chapter-summary">Chapter Summary<a class="headerlink" href="#chapter-summary" title="Permanent link">&para;</a></h2>
+<p>A CUDA warp issues one instruction to all 32 of its lanes at once; when lanes disagree about which branch to take, the warp pays for every distinct path taken, not just the slowest one — measured directly in Section 1.1 as a genuine 2x issue-pass cost for a fully divergent branch versus a uniform one. A pointer-chasing structure pays two separate costs: no per-thread lookahead into future addresses (a cost that exists on any machine), and no warp-level coalescing across 32 independent chains (a cost specific to how a GPU bundles memory transactions) — measured directly in Section 1.2 as a 24.5x difference in memory transactions for the identical data moved. How much of that second cost a kernel can actually hide depends on how many warps can be resident on an SM at once, which is capped by real, finite thread-slot, register-file, and shared-memory budgets — measured directly in Section 1.3 as occupancy dropping from 100% to 37.5% purely from a larger per-block shared-memory footprint, with no change in per-thread work. Every later chapter's data structure decisions — array-backed rather than pointer-backed linear structures in Part 2, uniform-control-flow tree traversals in Part 4, carefully sized shared-memory staging in Part 5 — trace back to one or more of these three facts.</p>
+<h2 id="self-check-questions">Self-Check Questions<a class="headerlink" href="#self-check-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li>A warp's 32 lanes execute a branch where 20 lanes take the <code>if</code> and 12 take the <code>else</code>. How many instruction-issue passes does this cost, under the model this chapter uses, and does the answer change if the split were 31 versus 1 instead?</li>
+<li><code>uniform_kernel</code> in Section 1.1 branches on <code>idx / 32</code> rather than <code>threadIdx.x</code>. Explain concretely why this specific choice of condition guarantees every lane within any one warp agrees, using the actual arithmetic of the condition.</li>
+<li>Section 1.2's Argument 1 (lookahead) and Argument 2 (coalescing) are described as "genuinely distinct." Describe a hypothetical machine where Argument 1's cost would be eliminated but Argument 2's cost would remain exactly as large.</li>
+<li>In Section 1.2's measured data, the array traversal touches exactly 1 distinct 128-byte line per step. Using the flat-offset formula <code>t*32 + lane</code>, explain why this is guaranteed regardless of which step <code>t</code> is being executed.</li>
+<li>Why does the linked-list traversal in Section 1.2 use a single shared node pool for all 32 lanes' lists, rather than giving each lane its own separately allocated small list? What would change about the measurement if each lane's list were allocated separately, right after the previous lane's?</li>
+<li>Using Section 1.3's three resource-limiting formulas, compute the actual blocks/SM for a kernel with 128 threads/block, 48 registers/thread, and 0 shared memory. Which resource is the binding constraint?</li>
+<li>Section 1.3 states that its occupancy numbers are an idealized "ceiling." Name one specific reason a real GPU's achieved occupancy for Config B could come in below the computed 50%, even though the arithmetic is correct.</li>
+<li>Suppose a fourth kernel, Config D, uses 256 threads/block, 32 registers/thread, and exactly 16384 bytes of shared memory per block. Compute its actual blocks/SM and resulting occupancy percentage using the same formulas as Config A/B/C.</li>
+<li>Explain, in your own words and referencing all three sections of this chapter, why "warp divergence," "pointer chasing," and "occupancy" are not three unrelated topics but three views of the same underlying fact about how this machine executes threads.</li>
+</ol>
+<h2 id="where-we-go-next">Where We Go Next<a class="headerlink" href="#where-we-go-next" title="Permanent link">&para;</a></h2>
+<p>Chapter 2 builds the CUDA execution and memory model this book needs from here forward — grids, blocks, the memory hierarchy from registers through global memory, and the CUDA Runtime API calls this book can genuinely make and honestly report on without a physical device. Chapter 3 then gives this new cost model a proper vocabulary, extending sequential Big-O analysis with <em>span</em> — a second axis of complexity that has no equivalent in a single-threaded course, and that this chapter's divergence and occupancy arguments were already, informally, reasoning about.</p>
+<h2 id="worked-solutions">Worked Solutions<a class="headerlink" href="#worked-solutions" title="Permanent link">&para;</a></h2>
+<p><strong>1.</strong> A 20/12 split still has exactly 2 distinct paths present in the warp (some lanes take <code>if</code>, some take <code>else</code>), so it costs exactly 2 issue-passes — identical to a 31/1 split, which also has exactly 2 distinct paths present. The <em>count</em> of lanes on each side never changes the number of issue-passes; only the <em>number of distinct paths</em> does. This is exactly what <code>distinct_paths_in_warp</code> in Section 1.1's code computes: it tracks two booleans (<code>any_a</code>, <code>any_b</code>), not lane counts.</p>
+<p><strong>2.</strong> <code>idx / 32</code> is precisely the warp index — CUDA lays out <code>threadIdx.x</code> values 0-31 into warp 0, 32-63 into warp 1, and so on, so every one of the 32 consecutive <code>idx</code> values inside one warp shares the same <code>idx / 32</code> (integer division floors identically for all 32). Since the branch condition <code>warp_id % 2 == 0</code> depends only on this shared value, every lane in a given warp evaluates the identical condition and takes the identical path — there is no per-lane term in the condition at all.</p>
+<p><strong>3.</strong> A hypothetical machine with a perfect per-thread hardware prefetcher that could somehow predict a linked list's next address before the current load completes (impossible in reality, since that address is genuinely unknown data — but useful as a thought experiment) would eliminate Argument 1's cost, since lookahead would no longer be zero. Argument 2's cost would remain completely unchanged, because it has nothing to do with any one thread's own prediction ability — it is about whether 32 <em>different</em> threads' addresses, once known, happen to land in the same 128-byte transaction. A perfect prefetcher for each of 32 independent, scattered chains still produces 32 scattered addresses per step.</p>
+<p><strong>4.</strong> The flat offset for lane <code>lane</code> at step <code>t</code> is <code>t*32 + lane</code>. For any fixed <code>t</code>, as <code>lane</code> ranges over 0-31, the offsets are <code>t*32 + 0</code> through <code>t*32 + 31</code> — 32 <em>consecutive</em> integers. Since <code>ELEMENTS_PER_LINE</code> is 32 (128 bytes / 4-byte elements), dividing any of these 32 consecutive offsets by 32 gives the identical quotient <code>t</code>, so all 32 addresses fall in line number <code>t</code> — exactly one distinct line — for every single value of <code>t</code>, not just the one measured.</p>
+<p><strong>5.</strong> A single shared pool lets all 32 lanes' lists be threaded through node addresses that are genuinely unrelated to which lane owns them — realistic for a list whose nodes were allocated over a program's lifetime rather than all at once for one lane. If each lane instead got its own small list allocated immediately after the previous lane's (contiguous per-lane blocks), the 32 lanes' step-<code>t</code> nodes could end up closer together in memory purely as an accident of allocation order, artificially improving the measured line count without addressing pointer chasing's actual, general cause — the shared, independently shuffled pool avoids that accidental best case.</p>
+<p><strong>6.</strong> <code>blocks_by_threads = 2048/128 = 16</code>. <code>blocks_by_registers = 65536/(128*48=6144) = 10</code> (integer division: 65536/6144 = 10.67, which floors to 10). <code>blocks_by_shared_mem</code> is unconstrained (0 bytes, treated as the 32-block hardware max). The binding constraint is the register file, giving <code>min(16, 10, 32, 32) = 10</code> blocks/SM, i.e. 1280 resident threads (62.5% occupancy) — registers, not thread slots, limit this kernel.</p>
+<p><strong>7.</strong> Real hardware allocates registers in per-warp granules of a fixed size (rather than one register at a time), so a kernel's actual per-thread register count can get rounded <em>up</em> to the next allocation unit before the true block limit is computed — meaning the real register-imposed block limit can come out lower than the raw division <code>REGISTER_FILE_SIZE / (threads_per_block * registers_per_thread)</code> computes, since that raw division assumes registers can be packed with no rounding waste at all.</p>
+<p><strong>8.</strong> <code>blocks_by_threads = 2048/256 = 8</code>. <code>blocks_by_registers = 65536/(256*32=8192) = 8</code>. <code>blocks_by_shared_mem = 167936/16384 = 10.25, which floors to 10</code>. The binding constraint is thread slots and registers, tied at 8: <code>min(8, 8, 10, 32) = 8</code> blocks/SM, i.e. 2048 resident threads — 100% occupancy, identical to Config A, since 16 KiB/block of shared memory is not yet enough to become the binding limit at this thread/register configuration.</p>
+<p><strong>9.</strong> All three sections describe consequences of the same fact: a warp is 32 lanes forced to move in lockstep, sharing both control flow and memory transactions, on a machine built from a small number of SMs each with strictly finite resources. Divergence (1.1) is what happens when lockstep lanes disagree about <em>which instruction</em> to execute. Pointer chasing's coalescing cost (1.2) is what happens when lockstep lanes disagree about <em>which address</em> to load. Occupancy (1.3) is what determines how many <em>separate</em> warps exist at all to paper over either kind of disagreement by having somewhere else useful to go. A data structure that ignores all three is not simply "unoptimized" — it is failing to account for the actual execution unit this machine schedules work in.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../getting-started/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Getting Started">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Getting Started
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../02-execution-and-memory-model/" class="md-footer__link md-footer__link--next" aria-label="Next: 2. The CUDA Execution and Memory Model">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                2. The CUDA Execution and Memory Model
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Oluwaseyi Awoga
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
