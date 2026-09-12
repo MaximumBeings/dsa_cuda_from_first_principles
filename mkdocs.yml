@@ -62,6 +62,8 @@ nav:
       - "1. Why Data Structures Change Shape on a GPU": part0/01-why-data-structures-change-shape.md
       - "2. The CUDA Execution and Memory Model": part0/02-execution-and-memory-model.md
       - "3. Work, Span, and Complexity on a Parallel Machine": part0/03-work-span-and-complexity.md
+  - "Part 1 — Parallel Primitives":
+      - "4. Reduction, For Real": part1/04-reduction.md
 
 extra:
   social: []
