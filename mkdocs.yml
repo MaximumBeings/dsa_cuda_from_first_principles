@@ -74,6 +74,7 @@ nav:
       - "11. Pointer-Chasing Linked Lists": part2/11-pointer-chasing-linked-lists.md
   - "Part 3 — Sorting":
       - "12. Bitonic Sort": part3/12-bitonic-sort.md
+      - "13. Radix Sort": part3/13-radix-sort.md
 
 extra:
   social: []
