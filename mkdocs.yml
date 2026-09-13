@@ -110,6 +110,7 @@ nav:
       - "D. Cooperative Groups and Grid-Wide Synchronization": appendix/d-cooperative-groups.md
       - "E. Profiling and Benchmarking Data Structure Operations": appendix/e-profiling-and-benchmarking.md
       - "F. From STL to CUDA: A Rosetta Stone": appendix/f-stl-to-cuda-rosetta-stone.md
+      - "G. Common Failure Modes: Divergence, Bank Conflicts, and Atomic Contention": appendix/g-common-failure-modes.md
 
 extra:
   social: []
