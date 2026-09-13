@@ -78,6 +78,7 @@ nav:
       - "14. Merge Sort and Sample Sort": part3/14-merge-sort-and-sample-sort.md
   - "Part 4 — Trees":
       - "15. Binary Trees Without Recursion": part4/15-binary-trees-without-recursion.md
+      - "16. Parallel Tree and Trie Construction": part4/16-parallel-tree-and-trie-construction.md
 
 extra:
   social: []
