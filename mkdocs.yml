@@ -87,6 +87,7 @@ nav:
   - "Part 6 — Graphs":
       - "21. CSR and Its Alternatives": part6/21-csr-and-its-alternatives.md
       - "22. The Frontier Model for Parallel Breadth-First Search": part6/22-the-frontier-model-for-parallel-breadth-first-search.md
+      - "23. Single-Source Shortest Paths": part6/23-single-source-shortest-paths.md
 
 extra:
   social: []
