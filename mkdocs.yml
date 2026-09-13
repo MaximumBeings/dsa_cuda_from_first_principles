@@ -99,6 +99,7 @@ nav:
       - "30. Spatial Hashing for Particle Simulation": part8/30-spatial-hashing-for-particle-simulation.md
       - "31. Parallel BVH Construction for Ray Tracing": part8/31-parallel-bvh-construction-for-ray-tracing.md
       - "32. High-Frequency Trading -- A Limit Order Book Matching Engine": part8/32-high-frequency-trading-a-limit-order-book-matching-engine.md
+      - "33. Monte Carlo Risk Simulation and Derivatives Pricing": part8/33-monte-carlo-risk-simulation-and-derivatives-pricing.md
 
 extra:
   social: []
