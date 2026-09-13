@@ -102,6 +102,7 @@ nav:
       - "33. Monte Carlo Risk Simulation and Derivatives Pricing": part8/33-monte-carlo-risk-simulation-and-derivatives-pricing.md
       - "34. Genomics -- Large-Scale Sequence Alignment and k-mer Counting": part8/34-genomics-large-scale-sequence-alignment-and-k-mer-counting.md
       - "35. LiDAR Point-Cloud Nearest-Neighbor Search for Autonomous Vehicles and SLAM": part8/35-lidar-point-cloud-nearest-neighbor-search-for-autonomous-vehicles-and-slam.md
+      - "36. Graph-Theoretic Arbitrage Detection in Foreign-Exchange Markets": part8/36-graph-theoretic-arbitrage-detection-in-foreign-exchange-markets.md
 
 extra:
   social: []
