@@ -982,7 +982,7 @@ A spatial hash grid for particle simulation reused every tool this chapter neede
 
 ## Where We Go Next
 
-Spatial hashing organizes particles by which cell they occupy, which is exactly the right tool for uniform, grid-like neighbor queries -- but it says nothing about which OBJECTS a ray actually passes through, or how to organize wildly different-sized objects (a tiny sphere next to a sprawling terrain mesh) into a single searchable structure. Chapter 31 closes the book with parallel BVH (bounding volume hierarchy) construction for ray tracing, building a tree-shaped spatial index from the ground up, combining Chapter 16's parallel tree construction with Chapter 4's reduction to bound each node's children.
+Spatial hashing organizes particles by which cell they occupy, which is exactly the right tool for uniform, grid-like neighbor queries -- but it says nothing about which OBJECTS a ray actually passes through, or how to organize wildly different-sized objects (a tiny sphere next to a sprawling terrain mesh) into a single searchable structure. Chapter 31 turns to parallel BVH (bounding volume hierarchy) construction for ray tracing, building a tree-shaped spatial index from the ground up, combining Chapter 16's parallel tree construction with Chapter 4's reduction to bound each node's children -- one of five remaining case studies that close out Part 8 by putting this book's toolbox to work on real production problems, from high-frequency trading to genomics to autonomous-vehicle perception.
 
 ## Worked Solutions
 
