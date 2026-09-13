@@ -109,6 +109,7 @@ nav:
       - "C. Thrust and CUB: The Standard Library You Get for Free": appendix/c-thrust-and-cub.md
       - "D. Cooperative Groups and Grid-Wide Synchronization": appendix/d-cooperative-groups.md
       - "E. Profiling and Benchmarking Data Structure Operations": appendix/e-profiling-and-benchmarking.md
+      - "F. From STL to CUDA: A Rosetta Stone": appendix/f-stl-to-cuda-rosetta-stone.md
 
 extra:
   social: []
