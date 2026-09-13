@@ -106,6 +106,7 @@ nav:
   - "Appendices":
       - "A. Installation & Setup": appendix/a-installation-and-setup.md
       - "B. Practice Quiz": appendix/b-practice-quiz.md
+      - "C. Thrust and CUB: The Standard Library You Get for Free": appendix/c-thrust-and-cub.md
 
 extra:
   social: []
