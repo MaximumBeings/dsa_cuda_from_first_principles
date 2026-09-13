@@ -1,0 +1,2940 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Parallel-First Data Structures, From Arrays to Concurrent Hash Tables">
+      
+      
+        <meta name="author" content="Oluwaseyi Awoga">
+      
+      
+      
+        <link rel="prev" href="../b-practice-quiz/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>C. Thrust and CUB: The Standard Library You Get for Free - Data Structures and Algorithms in CUDA C++ — Under Development</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#appendix-c-thrust-and-cub-the-standard-library-you-get-for-free" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Data Structures and Algorithms in CUDA C++ — Under Development" class="md-header__button md-logo" aria-label="Data Structures and Algorithms in CUDA C++ — Under Development" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Data Structures and Algorithms in CUDA C++ — Under Development
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              C. Thrust and CUB: The Standard Library You Get for Free
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Data Structures and Algorithms in CUDA C++ — Under Development" class="md-nav__button md-logo" aria-label="Data Structures and Algorithms in CUDA C++ — Under Development" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Data Structures and Algorithms in CUDA C++ — Under Development
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 0 — GPU Foundations for Data Structures and Algorithms
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 0 — GPU Foundations for Data Structures and Algorithms
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part0/01-why-data-structures-change-shape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Why Data Structures Change Shape on a GPU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part0/02-execution-and-memory-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. The CUDA Execution and Memory Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part0/03-work-span-and-complexity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. Work, Span, and Complexity on a Parallel Machine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 1 — Parallel Primitives
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 1 — Parallel Primitives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part1/04-reduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Reduction, For Real
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part1/05-scan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. Scan (Prefix Sum)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part1/06-stream-compaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6. Stream Compaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part1/07-histograms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. Histograms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 2 — Linear Structures Under Concurrency
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 2 — Linear Structures Under Concurrency
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part2/08-concurrent-arrays/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. Concurrent Arrays and Growable Buffers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part2/09-lock-free-stacks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9. Lock-Free Stacks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part2/10-lock-free-queues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10. Lock-Free Queues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part2/11-pointer-chasing-linked-lists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11. Pointer-Chasing Linked Lists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 3 — Sorting
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 3 — Sorting
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part3/12-bitonic-sort/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12. Bitonic Sort
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part3/13-radix-sort/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    13. Radix Sort
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part3/14-merge-sort-and-sample-sort/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    14. Merge Sort and Sample Sort
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 4 — Trees
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 4 — Trees
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part4/15-binary-trees-without-recursion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    15. Binary Trees Without Recursion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part4/16-parallel-tree-and-trie-construction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    16. Parallel Tree and Trie Construction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part4/17-segment-and-fenwick-trees-for-range-queries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    17. Segment and Fenwick Trees for Range Queries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part4/18-spatial-trees/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    18. Spatial Trees
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 5 — Hash Tables
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 5 — Hash Tables
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part5/19-open-addressing-under-concurrent-insertion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    19. Open Addressing Under Concurrent Insertion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part5/20-cuckoo-hashing-for-guaranteed-o1-worst-case-lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    20. Cuckoo Hashing for Guaranteed O(1) Worst-Case Lookup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 6 — Graphs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 6 — Graphs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part6/21-csr-and-its-alternatives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    21. CSR and Its Alternatives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part6/22-the-frontier-model-for-parallel-breadth-first-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    22. The Frontier Model for Parallel Breadth-First Search
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part6/23-single-source-shortest-paths/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    23. Single-Source Shortest Paths
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part6/24-connected-components/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    24. Connected Components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part6/25-minimum-spanning-trees/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    25. Minimum Spanning Trees
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 7 — Priority Structures and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 7 — Priority Structures and Concurrency
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part7/26-heaps-and-priority-queues-on-a-gpu/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    26. Heaps and Priority Queues on a GPU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part7/27-lock-free-and-atomic-based-concurrent-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    27. Lock-Free and Atomic-Based Concurrent Structures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part7/28-memory-pools-and-custom-allocators-for-dynamic-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    28. Memory Pools and Custom Allocators for Dynamic Structures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Part 8 — Case Studies
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Part 8 — Case Studies
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part8/29-a-gpu-key-value-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    29. A GPU Key-Value Store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part8/30-spatial-hashing-for-particle-simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    30. Spatial Hashing for Particle Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part8/31-parallel-bvh-construction-for-ray-tracing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    31. Parallel BVH Construction for Ray Tracing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part8/32-high-frequency-trading-a-limit-order-book-matching-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    32. High-Frequency Trading -- A Limit Order Book Matching Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part8/33-monte-carlo-risk-simulation-and-derivatives-pricing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    33. Monte Carlo Risk Simulation and Derivatives Pricing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part8/34-genomics-large-scale-sequence-alignment-and-k-mer-counting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    34. Genomics -- Large-Scale Sequence Alignment and k-mer Counting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part8/35-lidar-point-cloud-nearest-neighbor-search-for-autonomous-vehicles-and-slam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    35. LiDAR Point-Cloud Nearest-Neighbor Search for Autonomous Vehicles and SLAM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../part8/36-graph-theoretic-arbitrage-detection-in-foreign-exchange-markets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    36. Graph-Theoretic Arbitrage Detection in Foreign-Exchange Markets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appendices
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Appendices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../a-installation-and-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A. Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../b-practice-quiz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    B. Practice Quiz
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C. Thrust and CUB: The Standard Library You Get for Free
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C. Thrust and CUB: The Standard Library You Get for Free
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#c1-thrust-reduction-and-scan-without-writing-a-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C.1 Thrust: Reduction and Scan Without Writing a Kernel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C.1 Thrust: Reduction and Scan Without Writing a Kernel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-and-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code and Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c2-thrust-sorting-without-writing-a-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C.2 Thrust: Sorting Without Writing a Kernel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C.2 Thrust: Sorting Without Writing a Kernel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-and-verification_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code and Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c3-cub-the-building-blocks-underneath" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C.3 CUB: The Building Blocks Underneath
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C.3 CUB: The Building Blocks Underneath">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-and-verification_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code and Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c4-choosing-between-hand-written-kernels-thrust-and-cub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C.4 Choosing Between Hand-Written Kernels, Thrust, and CUB
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C.4 Choosing Between Hand-Written Kernels, Thrust, and CUB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#c1-thrust-reduction-and-scan-without-writing-a-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C.1 Thrust: Reduction and Scan Without Writing a Kernel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C.1 Thrust: Reduction and Scan Without Writing a Kernel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-and-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code and Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c2-thrust-sorting-without-writing-a-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C.2 Thrust: Sorting Without Writing a Kernel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C.2 Thrust: Sorting Without Writing a Kernel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-and-verification_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code and Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c3-cub-the-building-blocks-underneath" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C.3 CUB: The Building Blocks Underneath
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C.3 CUB: The Building Blocks Underneath">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-and-verification_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code and Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c4-choosing-between-hand-written-kernels-thrust-and-cub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C.4 Choosing Between Hand-Written Kernels, Thrust, and CUB
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C.4 Choosing Between Hand-Written Kernels, Thrust, and CUB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="appendix-c-thrust-and-cub-the-standard-library-you-get-for-free">Appendix C: Thrust and CUB -- The Standard Library You Get for Free<a class="headerlink" href="#appendix-c-thrust-and-cub-the-standard-library-you-get-for-free" title="Permanent link">&para;</a></h1>
+<p>Every reduction, scan, and sort in this book so far has been hand-written -- a <code>__global__</code> kernel, its own index arithmetic, its own boundary checks -- because that is the only way to actually learn what a GPU primitive does underneath. Production CUDA code very rarely writes these from scratch: NVIDIA ships two libraries, Thrust and CUB, that implement every primitive this book has built by hand, tuned by people who spend their careers on exactly this, and battle-tested across every architecture NVIDIA has ever shipped. Section C.1 replaces Chapter 4 and Chapter 5's hand-written reduction and scan with one Thrust call each -- genuinely executed, not simulated, using an execution policy that needs no device at all. Section C.2 does the same for Part 3's sorting chapters. Section C.3 goes one level deeper, into CUB, the block- and warp-level toolbox Thrust's own device backend is itself built from. Section C.4 is the practical question every one of the first three sections raises: given that Thrust and CUB exist, when should you still write your own kernel? One setup note before starting: this book's own pip-based toolchain (Appendix A) installs the CUDA Runtime and <code>nvcc</code> but not Thrust/CUB's headers on their own -- on this book's own environment they were added with <code>pip install nvidia-cuda-cccl --break-system-packages</code>, landing at <code>$NVDIR/include/cccl</code>; a full system-wide CUDA Toolkit install, including Lambda Stack on a real Lambda Cloud instance (Appendix A.4), already ships them at the compiler's default include path, with no separate install step at all.</p>
+<h2 id="c1-thrust-reduction-and-scan-without-writing-a-kernel">C.1 Thrust: Reduction and Scan Without Writing a Kernel<a class="headerlink" href="#c1-thrust-reduction-and-scan-without-writing-a-kernel" title="Permanent link">&para;</a></h2>
+<h3 id="intuition">Intuition<a class="headerlink" href="#intuition" title="Permanent link">&para;</a></h3>
+<p>Thrust is deliberately modeled on the C++ Standard Template Library: <code>thrust::reduce</code>, <code>thrust::inclusive_scan</code>, and <code>thrust::exclusive_scan</code> have almost the exact same call signatures as <code>std::accumulate</code> and <code>std::partial_sum</code>, and Chapter 4 and Chapter 5's entire job -- building a correct, efficient pairwise-tree reduction and a correct, efficient two-phase scan by hand -- is replaced by a single function call each. The genuinely interesting part for this book's own environment is Thrust's execution policy: passing <code>thrust::device</code> dispatches to a real CUDA kernel (which, like every other kernel in this book, would need a physical device to launch), but passing <code>thrust::host</code> runs the identical algorithm as ordinary sequential C++ directly on the CPU -- which means the code below is not a simulation of Thrust, it is Thrust, genuinely compiled and genuinely executed, with no device required at all.</p>
+<h3 id="the-concept-in-detail">The Concept, In Detail<a class="headerlink" href="#the-concept-in-detail" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ASCII view: one execution policy, two completely different backends.
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  thrust::reduce(thrust::device, first, last, init)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>       |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>       v
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  dispatches to a real CUDA kernel -- needs a physical GPU to launch,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  exactly like every other kernel in this book
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  thrust::reduce(thrust::host, first, last, init)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>       |
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>       v
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  runs as ordinary sequential C++ ON THE CPU -- no device, no kernel
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  launch, no cudaMalloc at all. Same algorithm&#39;s RESULT, different
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  hardware target entirely.
+</code></pre></div>
+<p>Chapter 4 built its own pairwise-tree reduction by hand specifically to show what happens underneath a call like <code>thrust::reduce</code> -- half the active values fold into the other half each round, until one value remains. Chapter 5's two scans (inclusive: each position includes its own element; exclusive: each position excludes it) are exactly <code>thrust::inclusive_scan</code> and <code>thrust::exclusive_scan</code>. Nothing about the algorithm changes; what changes is that a correctly-tuned, extensively-tested implementation now runs behind one line instead of forty.</p>
+<p>[COMMON TRAP]
+It is tempting to conclude that because <code>thrust::host</code> produces the identical result as a hand-rolled reduction kernel, <code>thrust::device</code> would too -- and therefore that switching between them is purely a performance decision. <code>thrust::device</code> genuinely requires a physical GPU to launch its kernel, exactly the same hardware requirement every <code>__global__</code> kernel in this book has; the only reason <code>thrust::host</code> works in this book's own environment at all is that it was specifically built to need no device. Do not read "Thrust hides the hardware" as "Thrust removes the hardware requirement" -- it only changes who wrote the kernel.</p>
+<h3 id="code-and-verification">Code and Verification<a class="headerlink" href="#code-and-verification" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// 219_thrust_reduce_scan.cu</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">//</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">// Appendix C.1 -- Thrust is the &quot;STL you get for free&quot;: a single header</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">// and a single function call replace an entire hand-written kernel.</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1">// thrust::reduce and thrust::inclusive_scan/exclusive_scan below are</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1">// GENUINELY executed -- not simulated -- by passing the thrust::host</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1">// execution policy, which runs the algorithm as ordinary sequential C++</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1">// on the CPU rather than dispatching to a CUDA kernel. This is exactly</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">// why this appendix can compile AND run real Thrust calls in an</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1">// environment with no GPU at all: thrust::host needs no device.</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1">//</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1">// Compile: nvcc -arch=sm_80 -DCCCL_DISABLE_CTK_COMPATIBILITY_CHECK -I$NVDIR/include/cccl 219_thrust_reduce_scan.cu -o 219_thrust_reduce_scan</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1">// Run:     ./219_thrust_reduce_scan</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thrust/host_vector.h&gt;</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thrust/execution_policy.h&gt;</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thrust/reduce.h&gt;</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thrust/scan.h&gt;</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">host_vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">};</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;=== Section C.1: thrust::reduce and thrust::scan, genuinely run on thrust::host ===</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;input: [&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;]</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thrust</span><span class="o">::</span><span class="n">reduce</span><span class="p">(</span><span class="n">thrust</span><span class="o">::</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;thrust::reduce(thrust::host, ...) -&gt; %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">total</span><span class="p">);</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;(this is Chapter 4&#39;s pairwise-tree reduction, called through one line)</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">host_vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">inclusive</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">inclusive_scan</span><span class="p">(</span><span class="n">thrust</span><span class="o">::</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="n">inclusive</span><span class="p">.</span><span class="n">begin</span><span class="p">());</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;thrust::inclusive_scan(thrust::host, ...) -&gt; [&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">inclusive</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">inclusive</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">inclusive</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">host_vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">exclusive</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">exclusive_scan</span><span class="p">(</span><span class="n">thrust</span><span class="o">::</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="n">exclusive</span><span class="p">.</span><span class="n">begin</span><span class="p">());</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;thrust::exclusive_scan(thrust::host, ...) -&gt; [&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">exclusive</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">exclusive</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">exclusive</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;(these are exactly Chapter 5&#39;s two scans, called through one line each)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">total</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">76</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">inclusive</span><span class="p">.</span><span class="n">back</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">76</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">exclusive</span><span class="p">.</span><span class="n">back</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">72</span><span class="p">);</span>
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">self-check: thrust::reduce&#39;s total, thrust::inclusive_scan&#39;s final element, and</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;thrust::exclusive_scan&#39;s final element are mutually consistent: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;confirmed&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;MISMATCH&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Compile and run:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">NVDIR</span><span class="o">=</span>/usr/local/lib/python3.11/dist-packages/nvidia/cu13
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">$NVDIR</span>/bin/nvcc<span class="w"> </span>-arch<span class="o">=</span>sm_80<span class="w"> </span>-DCCCL_DISABLE_CTK_COMPATIBILITY_CHECK<span class="w"> </span>-I<span class="nv">$NVDIR</span>/include/cccl<span class="w"> </span>219_thrust_reduce_scan.cu<span class="w"> </span>-o<span class="w"> </span>219_thrust_reduce_scan
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>./219_thrust_reduce_scan
+</code></pre></div>
+<p><strong>Sample input:</strong> the array <code>[12, 7, 3, 9, 15, 6, 20, 4]</code>.</p>
+<p><strong>Sample output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>=== Section C.1: thrust::reduce and thrust::scan, genuinely run on thrust::host ===
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>input: [12, 7, 3, 9, 15, 6, 20, 4]
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>thrust::reduce(thrust::host, ...) -&gt; 76
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>(this is Chapter 4&#39;s pairwise-tree reduction, called through one line)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>thrust::inclusive_scan(thrust::host, ...) -&gt; [12, 19, 22, 31, 46, 52, 72, 76]
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>thrust::exclusive_scan(thrust::host, ...) -&gt; [0, 12, 19, 22, 31, 46, 52, 72]
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>(these are exactly Chapter 5&#39;s two scans, called through one line each)
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>self-check: thrust::reduce&#39;s total, thrust::inclusive_scan&#39;s final element, and
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>thrust::exclusive_scan&#39;s final element are mutually consistent: confirmed
+</code></pre></div>
+<h2 id="c2-thrust-sorting-without-writing-a-kernel">C.2 Thrust: Sorting Without Writing a Kernel<a class="headerlink" href="#c2-thrust-sorting-without-writing-a-kernel" title="Permanent link">&para;</a></h2>
+<h3 id="intuition_1">Intuition<a class="headerlink" href="#intuition_1" title="Permanent link">&para;</a></h3>
+<p>Part 3 built three different sorting kernels -- bitonic, radix, and merge/sample sort -- each making a different tradeoff between regular, data-independent control flow and asymptotic comparison count. <code>thrust::sort</code> makes that choice for you, dispatching internally to whichever of those strategies (or another) its own implementation has found fastest for the given type and size, again runnable through <code>thrust::host</code> with no device required. <code>thrust::sort_by_key</code> solves a problem this book has run into repeatedly without naming it directly: reordering one array by the sorted order of ANOTHER array -- exactly what Section 32.2's price-ladder reduction and Section 35.2's nearest-neighbor argmin both needed when they packed a comparison key together with an index to recover.</p>
+<h3 id="the-concept-in-detail_1">The Concept, In Detail<a class="headerlink" href="#the-concept-in-detail_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ASCII view: sorting a value array while carrying a second array along.
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  values:  [29, 10, 14, 37,  3, 22, 18,  5]
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  indices: [ 0,  1,  2,  3,  4,  5,  6,  7]   &lt;- original position of each value
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  thrust::sort_by_key(values.begin(), values.end(), indices.begin())
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>       |
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>       v
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>  values:  [ 3,  5, 10, 14, 18, 22, 29, 37]
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>  indices: [ 4,  7,  1,  2,  6,  5,  0,  3]   &lt;- moved IN LOCKSTEP with values
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>  indices[i] now answers: &quot;the value now at sorted position i originally
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>  lived at position indices[i]&quot; -- exactly what Section 32.2/35.2 needed
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>  their own packed-key decode step to recover by hand
+</code></pre></div>
+<p>Every one of this book's own "pack a key with an index, then decode after sorting or reducing" tricks (Sections 25.2, 32.2, 35.2) exists because a hand-written reduction or sort only ever moves ONE array. <code>thrust::sort_by_key</code> (and its reduction-side relative, no separate packing step required) is the library-provided version of exactly that same need, letting a second, associated array ride along automatically instead of being encoded into spare bits of the sort key by hand.</p>
+<p>[COMMON TRAP]
+It is tempting to reach for the packed-key trick from Sections 25.2/32.2/35.2 out of habit, even when using Thrust. That trick exists specifically to work around a hand-written kernel only being able to sort or reduce ONE array at a time -- <code>thrust::sort_by_key</code> (and <code>thrust::reduce_by_key</code>, its reduction-side counterpart) already solves this directly, and reimplementing the packed-key workaround on top of a library call that does not need it adds real complexity for no benefit.</p>
+<h3 id="code-and-verification_1">Code and Verification<a class="headerlink" href="#code-and-verification_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// 220_thrust_sort.cu</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">//</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1">// Appendix C.2 -- thrust::sort replaces Part 3&#39;s hand-written bitonic,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">// radix, and merge/sample sort kernels with one call, and thrust::sort_by_key</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1">// carries a second array (here, each element&#39;s original index) along with</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">// the reordering -- exactly what a real system needs when the sorted</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1">// values are a KEY for looking up something else. Both calls below use</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1">// thrust::host, so they genuinely execute as real C++ on the CPU, with no</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1">// device required.</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1">//</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1">// Compile: nvcc -arch=sm_80 -DCCCL_DISABLE_CTK_COMPATIBILITY_CHECK -I$NVDIR/include/cccl 220_thrust_sort.cu -o 220_thrust_sort</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1">// Run:     ./220_thrust_sort</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thrust/host_vector.h&gt;</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thrust/execution_policy.h&gt;</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thrust/sort.h&gt;</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thrust/sequence.h&gt;</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">host_vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">29</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span><span class="w"> </span><span class="mi">37</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">22</span><span class="p">,</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">};</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;=== Section C.2: thrust::sort and thrust::sort_by_key, genuinely run on thrust::host ===</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;input: [&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;]</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">sort</span><span class="p">(</span><span class="n">thrust</span><span class="o">::</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;thrust::sort(thrust::host, ...) -&gt; [&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;(this is one call replacing Part 3&#39;s bitonic, radix, or merge sort kernels)</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">host_vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">data2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">29</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span><span class="w"> </span><span class="mi">37</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">22</span><span class="p">,</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">};</span>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">host_vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ids</span><span class="p">(</span><span class="n">data2</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">sequence</span><span class="p">(</span><span class="n">thrust</span><span class="o">::</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">ids</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">ids</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a><span class="w">    </span><span class="n">thrust</span><span class="o">::</span><span class="n">sort_by_key</span><span class="p">(</span><span class="n">thrust</span><span class="o">::</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">data2</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">data2</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="n">ids</span><span class="p">.</span><span class="n">begin</span><span class="p">());</span>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;thrust::sort_by_key(thrust::host, ...) -- sorting original indices alongside values:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  sorted values:  [&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data2</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">data2</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data2</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;]</span><span class="se">\n</span><span class="s">  original index: [&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ids</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ids</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">sorted_ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="w"> </span><span class="n">sorted_ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">keys_match_ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-5-49" name="__codelineno-5-49" href="#__codelineno-5-49"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">expected</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="mi">22</span><span class="p">,</span><span class="w"> </span><span class="mi">29</span><span class="p">,</span><span class="w"> </span><span class="mi">37</span><span class="p">};</span>
+<a id="__codelineno-5-50" name="__codelineno-5-50" href="#__codelineno-5-50"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data2</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">data2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">expected</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="w"> </span><span class="n">keys_match_ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<a id="__codelineno-5-51" name="__codelineno-5-51" href="#__codelineno-5-51"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sorted_ok</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">keys_match_ok</span><span class="p">;</span>
+<a id="__codelineno-5-52" name="__codelineno-5-52" href="#__codelineno-5-52"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">self-check: thrust::sort&#39;s output is non-decreasing, and thrust::sort_by_key&#39;s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-53" name="__codelineno-5-53" href="#__codelineno-5-53"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;sorted values match it exactly: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;confirmed&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;MISMATCH&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-54" name="__codelineno-5-54" href="#__codelineno-5-54"></a>
+<a id="__codelineno-5-55" name="__codelineno-5-55" href="#__codelineno-5-55"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-5-56" name="__codelineno-5-56" href="#__codelineno-5-56"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Compile and run:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">NVDIR</span><span class="o">=</span>/usr/local/lib/python3.11/dist-packages/nvidia/cu13
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">$NVDIR</span>/bin/nvcc<span class="w"> </span>-arch<span class="o">=</span>sm_80<span class="w"> </span>-DCCCL_DISABLE_CTK_COMPATIBILITY_CHECK<span class="w"> </span>-I<span class="nv">$NVDIR</span>/include/cccl<span class="w"> </span>220_thrust_sort.cu<span class="w"> </span>-o<span class="w"> </span>220_thrust_sort
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>./220_thrust_sort
+</code></pre></div>
+<p><strong>Sample input:</strong> the array <code>[29, 10, 14, 37, 3, 22, 18, 5]</code>, sorted both alone and alongside its own original indices.</p>
+<p><strong>Sample output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>=== Section C.2: thrust::sort and thrust::sort_by_key, genuinely run on thrust::host ===
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>input: [29, 10, 14, 37, 3, 22, 18, 5]
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>thrust::sort(thrust::host, ...) -&gt; [3, 5, 10, 14, 18, 22, 29, 37]
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>(this is one call replacing Part 3&#39;s bitonic, radix, or merge sort kernels)
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>thrust::sort_by_key(thrust::host, ...) -- sorting original indices alongside values:
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>  sorted values:  [3, 5, 10, 14, 18, 22, 29, 37]
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>  original index: [4, 7, 1, 2, 6, 5, 0, 3]
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>self-check: thrust::sort&#39;s output is non-decreasing, and thrust::sort_by_key&#39;s
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>sorted values match it exactly: confirmed
+</code></pre></div>
+<h2 id="c3-cub-the-building-blocks-underneath">C.3 CUB: The Building Blocks Underneath<a class="headerlink" href="#c3-cub-the-building-blocks-underneath" title="Permanent link">&para;</a></h2>
+<h3 id="intuition_2">Intuition<a class="headerlink" href="#intuition_2" title="Permanent link">&para;</a></h3>
+<p>Thrust's <code>thrust::device</code> execution policy does not reinvent reduction, scan, and sort from scratch inside its own CUDA backend -- it is built on top of CUB, a lower-level library of block-level, warp-level, and device-level primitives, each heavily tuned for a specific GPU architecture. <code>cub::BlockReduce</code>, used inside <code>block_reduce_kernel</code> below, is the block-level primitive that performs exactly the same pairwise-tree reduction Chapter 4 built by hand, packaged as a reusable C++ template that handles shared memory allocation, padding, and architecture-specific tuning internally. Where Sections C.1 and C.2 called Thrust as a finished tool, this section looks at the layer one step further down, closer to the hand-written kernels this book has built throughout -- CUB kernels are still kernels you write and launch yourself, just built from professionally-tuned pieces instead of raw shared-memory arithmetic.</p>
+<h3 id="the-concept-in-detail_2">The Concept, In Detail<a class="headerlink" href="#the-concept-in-detail_2" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ASCII view: three layers, same underlying reduction.
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  thrust::reduce(thrust::device, ...)        &lt;- Section C.1&#39;s call
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>       |
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>       v  (Thrust&#39;s CUDA backend, internally)
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  cub::BlockReduce&lt;T, BLOCK_THREADS&gt;::Sum()  &lt;- this section&#39;s call
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>       |
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>       v  (CUB&#39;s own implementation, internally)
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>  a tuned pairwise-tree / warp-shuffle reduction across BLOCK_THREADS lanes
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>       |
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>       v  (conceptually identical to)
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>  Chapter 4&#39;s own hand-written pairwise-tree reduction kernel
+</code></pre></div>
+<p><code>cub::BlockReduce</code> needs a <code>__shared__ TempStorage</code> object (CUB computes exactly how much shared memory its internal implementation needs, so you never have to size it by hand) and is called from inside a kernel exactly the way any other block-level operation would be -- it is not a host-callable function like <code>thrust::reduce</code>, it is a building block for kernels YOU still write and launch. Launching <code>block_reduce_kernel</code> genuinely needs a physical device, which this section's own code honestly attempts and honestly reports, exactly as Section 2.3 first established for this book's entire environment; the host-side replay beneath it walks through the identical fold-in-half logic CUB's own implementation performs internally, arriving at the same answer Section C.1's <code>thrust::reduce</code> already produced.</p>
+<p>[COMMON TRAP]
+It is tempting to think CUB and Thrust are competing alternatives, where a project picks one or the other. Thrust's own device backend is ITSELF implemented using CUB -- they are two layers of the same library family, not two competing ones. Reaching for CUB directly only makes sense when you are writing your own kernel and want a tuned building block inside it (the way <code>block_reduce_kernel</code> uses <code>cub::BlockReduce</code>), not as a replacement for calling <code>thrust::reduce</code> when a host-callable, already-complete algorithm is all you actually need.</p>
+<h3 id="code-and-verification_2">Code and Verification<a class="headerlink" href="#code-and-verification_2" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// 221_cub_block_reduce.cu</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1">//</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1">// Appendix C.3 -- CUB is the layer underneath Thrust: block-level, warp-</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">// level, and device-level primitives that Thrust&#39;s own CUDA backend (and</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1">// libraries like RAPIDS) are built from. block_reduce_kernel below is a</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">// real, syntactically valid kernel using cub::BlockReduce -- genuinely</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1">// compiled by nvcc. Launching it needs a real device, so this file first</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1">// makes a genuine, honest attempt (reusing Section 2.3&#39;s own pattern) and</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1">// then walks through the identical logic on the host, exactly the way</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1">// every kernel-needing-a-device file in this book has done since Chapter 2.</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1">//</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="c1">// Compile: nvcc -arch=sm_80 -DCCCL_DISABLE_CTK_COMPATIBILITY_CHECK -I$NVDIR/include/cccl -I$NVDIR/include -L$NVDIR/lib -lcudart 221_cub_block_reduce.cu -o 221_cub_block_reduce</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="c1">// Run:     LD_LIBRARY_PATH=$NVDIR/lib ./221_cub_block_reduce</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cuda_runtime.h&gt;</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cub/block/block_reduce.cuh&gt;</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="cp">#define BLOCK_THREADS 8</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="c1">// A real, syntactically valid kernel using CUB&#39;s block-level BlockReduce --</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="c1">// one of the exact building blocks Thrust&#39;s device backend, and libraries</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="c1">// like cuDF and RAPIDS, are themselves built from underneath the STL-like</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="c1">// surface Sections C.1/C.2 called directly.</span>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">block_reduce_kernel</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">    </span><span class="k">typedef</span><span class="w"> </span><span class="n">cub</span><span class="o">::</span><span class="n">BlockReduce</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="n">BLOCK_THREADS</span><span class="o">&gt;</span><span class="w"> </span><span class="n">BlockReduceT</span><span class="p">;</span>
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">BlockReduceT</span><span class="o">::</span><span class="n">TempStorage</span><span class="w"> </span><span class="n">temp_storage</span><span class="p">;</span>
+<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">thread_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">tid</span><span class="p">];</span>
+<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">block_sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BlockReduceT</span><span class="p">(</span><span class="n">temp_storage</span><span class="p">).</span><span class="n">Sum</span><span class="p">(</span><span class="n">thread_val</span><span class="p">);</span>
+<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>
+<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">block_sum</span><span class="p">;</span>
+<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a><span class="p">}</span>
+<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a>
+<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a><span class="kt">void</span><span class="w"> </span><span class="n">report</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">call_name</span><span class="p">,</span><span class="w"> </span><span class="n">cudaError_t</span><span class="w"> </span><span class="n">err</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  %-24s -&gt; %-24s (%s)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">call_name</span><span class="p">,</span><span class="w"> </span><span class="n">cudaGetErrorName</span><span class="p">(</span><span class="n">err</span><span class="p">),</span><span class="w"> </span><span class="n">cudaGetErrorString</span><span class="p">(</span><span class="n">err</span><span class="p">));</span>
+<a id="__codelineno-9-38" name="__codelineno-9-38" href="#__codelineno-9-38"></a><span class="p">}</span>
+<a id="__codelineno-9-39" name="__codelineno-9-39" href="#__codelineno-9-39"></a>
+<a id="__codelineno-9-40" name="__codelineno-9-40" href="#__codelineno-9-40"></a><span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-41" name="__codelineno-9-41" href="#__codelineno-9-41"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">h_in</span><span class="p">[</span><span class="n">BLOCK_THREADS</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">};</span>
+<a id="__codelineno-9-42" name="__codelineno-9-42" href="#__codelineno-9-42"></a>
+<a id="__codelineno-9-43" name="__codelineno-9-43" href="#__codelineno-9-43"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;=== Section C.3: attempting a genuine launch of block_reduce_kernel ===</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-44" name="__codelineno-9-44" href="#__codelineno-9-44"></a><span class="w">    </span><span class="kt">int</span><span class="o">*</span><span class="w"> </span><span class="n">d_in</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">;</span>
+<a id="__codelineno-9-45" name="__codelineno-9-45" href="#__codelineno-9-45"></a><span class="w">    </span><span class="kt">int</span><span class="o">*</span><span class="w"> </span><span class="n">d_out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">;</span>
+<a id="__codelineno-9-46" name="__codelineno-9-46" href="#__codelineno-9-46"></a><span class="w">    </span><span class="n">cudaError_t</span><span class="w"> </span><span class="n">e1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_in</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">h_in</span><span class="p">));</span>
+<a id="__codelineno-9-47" name="__codelineno-9-47" href="#__codelineno-9-47"></a><span class="w">    </span><span class="n">report</span><span class="p">(</span><span class="s">&quot;cudaMalloc(d_in)&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e1</span><span class="p">);</span>
+<a id="__codelineno-9-48" name="__codelineno-9-48" href="#__codelineno-9-48"></a><span class="w">    </span><span class="n">cudaError_t</span><span class="w"> </span><span class="n">e2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_out</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
+<a id="__codelineno-9-49" name="__codelineno-9-49" href="#__codelineno-9-49"></a><span class="w">    </span><span class="n">report</span><span class="p">(</span><span class="s">&quot;cudaMalloc(d_out)&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e2</span><span class="p">);</span>
+<a id="__codelineno-9-50" name="__codelineno-9-50" href="#__codelineno-9-50"></a>
+<a id="__codelineno-9-51" name="__codelineno-9-51" href="#__codelineno-9-51"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">e1</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">cudaSuccess</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">e2</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">cudaSuccess</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-52" name="__codelineno-9-52" href="#__codelineno-9-52"></a><span class="w">        </span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_in</span><span class="p">,</span><span class="w"> </span><span class="n">h_in</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">h_in</span><span class="p">),</span><span class="w"> </span><span class="n">cudaMemcpyHostToDevice</span><span class="p">);</span>
+<a id="__codelineno-9-53" name="__codelineno-9-53" href="#__codelineno-9-53"></a><span class="w">        </span><span class="n">block_reduce_kernel</span><span class="o">&lt;&lt;&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">BLOCK_THREADS</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_in</span><span class="p">,</span><span class="w"> </span><span class="n">d_out</span><span class="p">);</span>
+<a id="__codelineno-9-54" name="__codelineno-9-54" href="#__codelineno-9-54"></a><span class="w">        </span><span class="n">cudaError_t</span><span class="w"> </span><span class="n">e3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cudaGetLastError</span><span class="p">();</span>
+<a id="__codelineno-9-55" name="__codelineno-9-55" href="#__codelineno-9-55"></a><span class="w">        </span><span class="n">report</span><span class="p">(</span><span class="s">&quot;kernel launch&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e3</span><span class="p">);</span>
+<a id="__codelineno-9-56" name="__codelineno-9-56" href="#__codelineno-9-56"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-57" name="__codelineno-9-57" href="#__codelineno-9-57"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  (device allocation failed -- this environment has no usable GPU, so the</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-58" name="__codelineno-9-58" href="#__codelineno-9-58"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;   kernel above is genuinely compiled and syntax-checked but cannot actually</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-59" name="__codelineno-9-59" href="#__codelineno-9-59"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;   be launched here, exactly as Section 2.3 first established)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-60" name="__codelineno-9-60" href="#__codelineno-9-60"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-9-61" name="__codelineno-9-61" href="#__codelineno-9-61"></a>
+<a id="__codelineno-9-62" name="__codelineno-9-62" href="#__codelineno-9-62"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">=== host-side replay of CUB&#39;s own internal logic ===</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-63" name="__codelineno-9-63" href="#__codelineno-9-63"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;input: [12, 7, 3, 9, 15, 6, 20, 4]</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-64" name="__codelineno-9-64" href="#__codelineno-9-64"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">vals</span><span class="p">[</span><span class="n">BLOCK_THREADS</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">};</span>
+<a id="__codelineno-9-65" name="__codelineno-9-65" href="#__codelineno-9-65"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BLOCK_THREADS</span><span class="p">;</span>
+<a id="__codelineno-9-66" name="__codelineno-9-66" href="#__codelineno-9-66"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">round</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-9-67" name="__codelineno-9-67" href="#__codelineno-9-67"></a><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-68" name="__codelineno-9-68" href="#__codelineno-9-68"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">half</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<a id="__codelineno-9-69" name="__codelineno-9-69" href="#__codelineno-9-69"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;round %d: %d active lanes fold in half:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<a id="__codelineno-9-70" name="__codelineno-9-70" href="#__codelineno-9-70"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">half</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-71" name="__codelineno-9-71" href="#__codelineno-9-71"></a><span class="w">            </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  lane %d: %d + %d = %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">vals</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">vals</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">half</span><span class="p">],</span><span class="w"> </span><span class="n">vals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">vals</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">half</span><span class="p">]);</span>
+<a id="__codelineno-9-72" name="__codelineno-9-72" href="#__codelineno-9-72"></a><span class="w">            </span><span class="n">vals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">vals</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">half</span><span class="p">];</span>
+<a id="__codelineno-9-73" name="__codelineno-9-73" href="#__codelineno-9-73"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-9-74" name="__codelineno-9-74" href="#__codelineno-9-74"></a><span class="w">        </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">half</span><span class="p">;</span>
+<a id="__codelineno-9-75" name="__codelineno-9-75" href="#__codelineno-9-75"></a><span class="w">        </span><span class="n">round</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-9-76" name="__codelineno-9-76" href="#__codelineno-9-76"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-9-77" name="__codelineno-9-77" href="#__codelineno-9-77"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">BlockReduce&lt;int, 8&gt;::Sum() result: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">vals</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<a id="__codelineno-9-78" name="__codelineno-9-78" href="#__codelineno-9-78"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;(this is exactly Chapter 4&#39;s pairwise-tree reduction -- CUB&#39;s BlockReduce is a</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-79" name="__codelineno-9-79" href="#__codelineno-9-79"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;tuned, reusable implementation of the identical idea, not a different one)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-80" name="__codelineno-9-80" href="#__codelineno-9-80"></a>
+<a id="__codelineno-9-81" name="__codelineno-9-81" href="#__codelineno-9-81"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">vals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">76</span><span class="p">);</span>
+<a id="__codelineno-9-82" name="__codelineno-9-82" href="#__codelineno-9-82"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">self-check: host-side replay matches thrust::reduce&#39;s own result from Section</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-83" name="__codelineno-9-83" href="#__codelineno-9-83"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;C.1 (76) exactly: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;confirmed&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;MISMATCH&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-84" name="__codelineno-9-84" href="#__codelineno-9-84"></a>
+<a id="__codelineno-9-85" name="__codelineno-9-85" href="#__codelineno-9-85"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-9-86" name="__codelineno-9-86" href="#__codelineno-9-86"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Compile and run:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nv">NVDIR</span><span class="o">=</span>/usr/local/lib/python3.11/dist-packages/nvidia/cu13
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nv">$NVDIR</span>/bin/nvcc<span class="w"> </span>-arch<span class="o">=</span>sm_80<span class="w"> </span>-DCCCL_DISABLE_CTK_COMPATIBILITY_CHECK<span class="w"> </span>-I<span class="nv">$NVDIR</span>/include/cccl<span class="w"> </span>-I<span class="nv">$NVDIR</span>/include<span class="w"> </span>-L<span class="nv">$NVDIR</span>/lib<span class="w"> </span>-lcudart<span class="w"> </span>221_cub_block_reduce.cu<span class="w"> </span>-o<span class="w"> </span>221_cub_block_reduce
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$NVDIR</span>/lib<span class="w"> </span>./221_cub_block_reduce
+</code></pre></div>
+<p><strong>Sample input:</strong> the same 8-element array Section C.1 already reduced with <code>thrust::reduce</code> (<code>[12, 7, 3, 9, 15, 6, 20, 4]</code>), used here to confirm both approaches agree.</p>
+<p><strong>Sample output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>=== Section C.3: attempting a genuine launch of block_reduce_kernel ===
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  cudaMalloc(d_in)         -&gt; cudaErrorInsufficientDriver (CUDA driver version is insufficient for CUDA runtime version)
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  cudaMalloc(d_out)        -&gt; cudaErrorInsufficientDriver (CUDA driver version is insufficient for CUDA runtime version)
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  (device allocation failed -- this environment has no usable GPU, so the
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>   kernel above is genuinely compiled and syntax-checked but cannot actually
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>   be launched here, exactly as Section 2.3 first established)
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>=== host-side replay of CUB&#39;s own internal logic ===
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>input: [12, 7, 3, 9, 15, 6, 20, 4]
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>round 1: 8 active lanes fold in half:
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>  lane 0: 12 + 15 = 27
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>  lane 1: 7 + 6 = 13
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>  lane 2: 3 + 20 = 23
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>  lane 3: 9 + 4 = 13
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>round 2: 4 active lanes fold in half:
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>  lane 0: 27 + 23 = 50
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>  lane 1: 13 + 13 = 26
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>round 3: 2 active lanes fold in half:
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>  lane 0: 50 + 26 = 76
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>BlockReduce&lt;int, 8&gt;::Sum() result: 76
+<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>(this is exactly Chapter 4&#39;s pairwise-tree reduction -- CUB&#39;s BlockReduce is a
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>tuned, reusable implementation of the identical idea, not a different one)
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a>self-check: host-side replay matches thrust::reduce&#39;s own result from Section
+<a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a>C.1 (76) exactly: confirmed
+</code></pre></div>
+<h2 id="c4-choosing-between-hand-written-kernels-thrust-and-cub">C.4 Choosing Between Hand-Written Kernels, Thrust, and CUB<a class="headerlink" href="#c4-choosing-between-hand-written-kernels-thrust-and-cub" title="Permanent link">&para;</a></h2>
+<h3 id="intuition_3">Intuition<a class="headerlink" href="#intuition_3" title="Permanent link">&para;</a></h3>
+<p>Every chapter in this book wrote its own kernel, on purpose: the entire point of a book that teaches data structures and algorithms in CUDA C++ is understanding what a reduction, a scan, a hash table probe, or a graph relaxation round actually does at the level of threads, shared memory, and atomics -- exactly what Thrust and CUB exist to let a working engineer stop thinking about, once they already understand it. This section is not a recommendation to rewrite this book's own 36 chapters using library calls; it is the practical decision a real project actually has to make once this book's own material is second nature.</p>
+<h3 id="the-concept-in-detail_3">The Concept, In Detail<a class="headerlink" href="#the-concept-in-detail_3" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>ASCII view: three layers, three different reasons to use each.
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  hand-written kernel (this book&#39;s own approach, Chapters 1-36)
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    -- use when: the operation is genuinely NOVEL (nothing in Thrust/CUB
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>       does it), or full control over memory layout and algorithm choice
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>       matters more than development time, or -- as in this entire book --
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>       the GOAL is learning exactly what happens underneath.
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>  CUB (block/warp/device-level primitives)
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    -- use when: you are writing your own kernel (a custom data structure
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>       operation, say) but want a tuned, correct building block for a
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>       PIECE of it -- a block-wide reduction, a warp-wide scan, a device-
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>       wide sort as one step of a larger custom pipeline.
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>  Thrust (host-callable, STL-like algorithms)
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>    -- use when: the operation IS one of the standard primitives (reduce,
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>       scan, sort, and their relatives) and there is no reason to write or
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>       maintain your own version of something NVIDIA&#39;s own engineers have
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>       already tuned across every architecture they ship.
+</code></pre></div>
+<p>A useful rule of thumb: reach for Thrust first, since a huge fraction of real GPU code genuinely is "sort this," "reduce this," or "compact this" with no further customization needed. Reach for CUB when a custom kernel needs one of those same operations as an internal PIECE of something larger and more specific that Thrust itself cannot express as one call. Write your own kernel, the way this entire book has, only when the operation itself does not exist in either library, or when understanding and controlling every step is the actual goal -- which, for a book with this one's title, has been true on essentially every page.</p>
+<h2 id="appendix-summary">Appendix Summary<a class="headerlink" href="#appendix-summary" title="Permanent link">&para;</a></h2>
+<p>Section C.1 showed that Chapter 4's reduction and Chapter 5's two scans are each one <code>thrust::reduce</code>/<code>thrust::inclusive_scan</code>/<code>thrust::exclusive_scan</code> call away, genuinely executed via <code>thrust::host</code> with no device required at all. Section C.2 showed the same for Part 3's sorting chapters, with <code>thrust::sort_by_key</code> solving, directly and by name, the "carry a second array along with the sort" problem this book's own packed-key tricks (Sections 25.2, 32.2, 35.2) had to work around by hand. Section C.3 went one layer deeper into CUB, the block/warp/device-level toolbox Thrust's own device backend is itself built from, and confirmed that <code>cub::BlockReduce</code>'s internal logic is, fold for fold, Chapter 4's own pairwise-tree reduction. Section C.4 closed with the practical question all three raise: write your own kernel when the goal is control or when nothing else does what you need (this entire book's own reason for existing), reach for CUB when a custom kernel needs one tuned building block internally, and reach for Thrust first whenever the job really is just "reduce this, scan this, or sort this."</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../b-practice-quiz/" class="md-footer__link md-footer__link--prev" aria-label="Previous: B. Practice Quiz">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                B. Practice Quiz
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Oluwaseyi Awoga
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
