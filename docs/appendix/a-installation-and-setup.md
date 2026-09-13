@@ -1,6 +1,6 @@
 # Appendix A: Installation & Setup
 
-Every chapter in this book states, up front, which of three things a given piece of code is: plain host C++ genuinely compiled with `g++`, a CUDA kernel genuinely compiled with `nvcc` and checked by an exhaustive host-side simulation of its exact logic (since this book's own authoring environment has no physical GPU), or a CUDA Runtime API call genuinely made and honestly reported, whatever this environment's own hardware situation causes it to return. None of that is possible without a working toolchain first. This appendix is the thing to run before Chapter 1: it confirms `nvcc` and `g++` are both present and speak the language version this book assumes (A.1), turns the CUDA Runtime API calls Section 2.3 already introduced into a practical, plain-language installation checklist (A.2), and hands you a minimal, genuinely-tested `Makefile` that encodes this book's own compile-line conventions so you never have to retype them by hand (A.3).
+Every chapter in this book states, up front, which of three things a given piece of code is: plain host C++ genuinely compiled with `g++`, a CUDA kernel genuinely compiled with `nvcc` and checked by an exhaustive host-side simulation of its exact logic (since this book's own authoring environment has no physical GPU), or a CUDA Runtime API call genuinely made and honestly reported, whatever this environment's own hardware situation causes it to return. None of that is possible without a working toolchain first. This appendix is the thing to run before Chapter 1: it confirms `nvcc` and `g++` are both present and speak the language version this book assumes (A.1), turns the CUDA Runtime API calls Section 2.3 already introduced into a practical, plain-language installation checklist (A.2), hands you a minimal, genuinely-tested `Makefile` that encodes this book's own compile-line conventions so you never have to retype them by hand (A.3), and, for anyone who wants to go one step further than this book's own environment ever could, walks through renting a real GPU by the hour on Lambda Cloud so every kernel in this book can be genuinely launched, not just simulated (A.4).
 
 ## A.1 Confirming Your Toolchain: nvcc and g++
 
@@ -446,6 +446,71 @@ $ LD_LIBRARY_PATH=$NVDIR/lib ./hello_kernel
 hello_kernel: compiled with nvcc, contains one real __global__ kernel
 ```
 
+## A.4 Running This Book on Real GPU Hardware via Lambda Cloud
+
+### Intuition
+
+Section A.2's own checklist reports, honestly, that this book's authoring environment has a genuine CUDA Runtime but no driver and no physical device -- which is exactly why every kernel in this book is checked by an exhaustive host-side simulation rather than a real launch. A reader who wants to go one step further and actually LAUNCH these kernels on physical hardware needs a real NVIDIA GPU, and the fastest way to get one without buying it is a pay-per-hour GPU cloud provider. Lambda Cloud (`lambda.ai`) is a convenient choice for exactly this book, because its default machine image -- Lambda Stack -- ships with the NVIDIA driver, the CUDA toolkit (including `nvcc`), cuDNN, and NCCL already installed: Section A.2's own `209_cuda_runtime_installation_check` should report all three of its checks as FOUND on a freshly launched instance, with no separate CUDA installation step of your own required at all.
+
+### The Concept, In Detail
+
+```
+ASCII view: from this book's own environment to a real, driver-having GPU.
+
+  this book's sandbox:  CUDA Runtime, no driver, no GPU
+         |
+         |  1. create an account at cloud.lambda.ai
+         |  2. add a public SSH key (console, or `ssh-keygen` locally first)
+         |  3. launch an instance (pick a GPU type + region, e.g. one A10/A100/H100)
+         |  4. wait for status "Running", copy its "ssh ubuntu@<address>" command
+         v
+  a real Lambda Cloud instance:  Lambda Stack preinstalled
+         |
+         |  5. ssh ubuntu@<address>
+         |  6. clone this book's repo, rerun Section A.2's own check program
+         v
+  209_cuda_runtime_installation_check now reports:
+    CUDA toolkit (runtime library): FOUND
+    NVIDIA driver:                  FOUND
+    usable GPU device:              FOUND      <-- genuinely different from
+                                                     this book's own sandbox
+```
+
+Steps 1 through 4 happen in a web browser, at the Lambda Cloud console; step 5 is an ordinary SSH connection using the username `ubuntu`, exactly like connecting to any other cloud Linux VM; step 6 is the payoff -- the identical `209_cuda_runtime_installation_check.cu` file this appendix already compiled and locked in Section A.2 can be recompiled and rerun there completely unchanged, and every `-arch=sm_80` `nvcc` compile command this book has used since Chapter 1 is now launching real kernels on real hardware, not merely compiling them.
+
+**On the Lambda Cloud console (a browser, not a terminal):**
+
+1. Sign up (or sign in) at `cloud.lambda.ai`.
+2. Under SSH keys, add a public key -- generate one first if you don't already have one:
+
+```bash
+ssh-keygen -t ed25519 -C "dsa-cuda-book"
+```
+
+3. Under Instances, launch a new instance: pick any GPU type with availability in a nearby region (a single A10 or A100 is more than enough for every kernel in this book -- none of them need more than one device), select "Don't attach a filesystem" unless you specifically want persistent storage across instances, and choose the SSH key you just added.
+4. Wait for the instance's status to change to "Running," then copy the SSH command the console shows you.
+
+**From your own terminal:**
+
+```bash
+ssh ubuntu@<the address the console gave you>
+```
+
+**Once connected, clone this book's repo and rerun Section A.2's own check:**
+
+```bash
+git clone <this book's repository URL>
+cd dsa_cuda_from_first_principles
+NVDIR=$(dirname $(dirname $(which nvcc)))
+nvcc -arch=sm_80 -I$NVDIR/include -L$NVDIR/lib -lcudart 209_cuda_runtime_installation_check.cu -o 209_cuda_runtime_installation_check
+./209_cuda_runtime_installation_check
+```
+
+On Lambda Stack, `nvcc` is already on your `PATH`, so the `NVDIR`/`-I`/`-L` plumbing this book's sandbox needs (because its toolkit was installed via a pip package rather than system-wide) is usually unnecessary there -- a plain `nvcc -arch=sm_80 209_cuda_runtime_installation_check.cu -o 209_cuda_runtime_installation_check` is normally enough. Because this specific walkthrough depends on a real, billed, external machine that this book's own authoring environment has no access to, its exact console output cannot be captured and locked here the way every other piece of output in this book is -- but the three-question diagnosis Section A.2 already built is exactly what will answer, for real, whether it worked.
+
+[COMMON TRAP]
+It is tempting to leave a GPU instance running once you are done experimenting, since disconnecting your SSH session does not stop it. Every pay-per-hour GPU provider, Lambda Cloud included, bills for each hour an instance sits in the "Running" state, whether or not you are actively connected to it or a kernel is currently executing -- the only way to stop being billed is to explicitly terminate the instance from the console (or its API), which is worth making the deliberate last step of any real-hardware session, not an afterthought.
+
 ## Appendix Summary
 
-Section A.1 confirmed that `nvcc` and `g++` are both present and that this book's bare compile commands (no explicit `-std` flag on the `nvcc` side) already produce C++17, by reading the same facts a version banner shows back out of nvcc's own preprocessor macros. Section A.2 turned Section 2.3's Runtime-API teaching example into a three-question installation checklist -- toolkit, driver, GPU, checked in that dependency order -- that reports honestly whatever is or is not actually present on the machine running it, this book's own driver-less authoring environment included. Section A.3 packaged both of this book's compile-line conventions into a small, genuinely-tested `Makefile`, so that every chapter's own stated compile command is something you run once via `make` rather than retype by hand for every file.
+Section A.1 confirmed that `nvcc` and `g++` are both present and that this book's bare compile commands (no explicit `-std` flag on the `nvcc` side) already produce C++17, by reading the same facts a version banner shows back out of nvcc's own preprocessor macros. Section A.2 turned Section 2.3's Runtime-API teaching example into a three-question installation checklist -- toolkit, driver, GPU, checked in that dependency order -- that reports honestly whatever is or is not actually present on the machine running it, this book's own driver-less authoring environment included. Section A.3 packaged both of this book's compile-line conventions into a small, genuinely-tested `Makefile`, so that every chapter's own stated compile command is something you run once via `make` rather than retype by hand for every file. Section A.4 pointed past this book's own sandbox entirely: a pay-per-hour Lambda Cloud instance comes with the entire toolchain this appendix just finished verifying already installed, and Section A.2's own checklist is the exact tool for confirming it -- with FOUND replacing NOT FOUND in all three places.
