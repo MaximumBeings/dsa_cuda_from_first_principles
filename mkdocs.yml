@@ -96,6 +96,7 @@ nav:
       - "28. Memory Pools and Custom Allocators for Dynamic Structures": part7/28-memory-pools-and-custom-allocators-for-dynamic-structures.md
   - "Part 8 — Case Studies":
       - "29. A GPU Key-Value Store": part8/29-a-gpu-key-value-store.md
+      - "30. Spatial Hashing for Particle Simulation": part8/30-spatial-hashing-for-particle-simulation.md
 
 extra:
   social: []
