@@ -93,6 +93,7 @@ nav:
   - "Part 7 — Priority Structures and Concurrency":
       - "26. Heaps and Priority Queues on a GPU": part7/26-heaps-and-priority-queues-on-a-gpu.md
       - "27. Lock-Free and Atomic-Based Concurrent Structures": part7/27-lock-free-and-atomic-based-concurrent-structures.md
+      - "28. Memory Pools and Custom Allocators for Dynamic Structures": part7/28-memory-pools-and-custom-allocators-for-dynamic-structures.md
 
 extra:
   social: []
