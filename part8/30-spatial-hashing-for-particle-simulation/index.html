@@ -16,6 +16,8 @@
         <link rel="prev" href="../29-a-gpu-key-value-store/">
       
       
+        <link rel="next" href="../31-parallel-bvh-construction-for-ray-tracing/">
+      
       
         
       
@@ -1939,6 +1941,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../31-parallel-bvh-construction-for-ray-tracing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    31. Parallel BVH Construction for Ray Tracing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3111,7 +3141,7 @@ It is tempting to skip the cell-coordinate check entirely and simply compute the
 <li>Section 30.3's kernel runs many query threads concurrently over the same grid with no synchronization between them at all. What property of the grid, once built, makes that safe?</li>
 </ol>
 <h2 id="where-we-go-next">Where We Go Next<a class="headerlink" href="#where-we-go-next" title="Permanent link">&para;</a></h2>
-<p>Spatial hashing organizes particles by which cell they occupy, which is exactly the right tool for uniform, grid-like neighbor queries -- but it says nothing about which OBJECTS a ray actually passes through, or how to organize wildly different-sized objects (a tiny sphere next to a sprawling terrain mesh) into a single searchable structure. Chapter 31 closes the book with parallel BVH (bounding volume hierarchy) construction for ray tracing, building a tree-shaped spatial index from the ground up, combining Chapter 16's parallel tree construction with Chapter 4's reduction to bound each node's children.</p>
+<p>Spatial hashing organizes particles by which cell they occupy, which is exactly the right tool for uniform, grid-like neighbor queries -- but it says nothing about which OBJECTS a ray actually passes through, or how to organize wildly different-sized objects (a tiny sphere next to a sprawling terrain mesh) into a single searchable structure. Chapter 31 turns to parallel BVH (bounding volume hierarchy) construction for ray tracing, building a tree-shaped spatial index from the ground up, combining Chapter 16's parallel tree construction with Chapter 4's reduction to bound each node's children -- one of five remaining case studies that close out Part 8 by putting this book's toolbox to work on real production problems, from high-frequency trading to genomics to autonomous-vehicle perception.</p>
 <h2 id="worked-solutions">Worked Solutions<a class="headerlink" href="#worked-solutions" title="Permanent link">&para;</a></h2>
 <p><strong>1.</strong> Computing a hash from a value a thread already privately holds -- its own particle's position -- involves no shared state at all: every thread reads only its own input and writes only its own output slot, so no two threads can ever interfere with each other's work. Section 30.2's histogram and scatter, by contrast, have multiple threads potentially incrementing the SAME shared bucket counter or cursor (whenever their particles land in the same bucket), and <code>atomicAdd</code> is what guarantees each of those increments is applied without any being silently lost.</p>
 <p><strong>2.</strong> Two particles "collide" in a spatial hash when the hash function maps their cell coordinates to the SAME bucket index, which can happen either because they share the same cell (a genuine spatial match) or, just as easily, because the hash function's limited output range mapped two completely different, possibly very distant cells to the same bucket by coincidence. This happens precisely because a spatial hash table intentionally uses far fewer buckets than the number of distinct cells a large or unbounded domain could contain, so some cells are guaranteed to share buckets.</p>
@@ -3169,6 +3199,22 @@ It is tempting to skip the cell-coordinate check entirely and simply compute the
             </div>
           </a>
         
+        
+          
+          <a href="../31-parallel-bvh-construction-for-ray-tracing/" class="md-footer__link md-footer__link--next" aria-label="Next: 31. Parallel BVH Construction for Ray Tracing">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                31. Parallel BVH Construction for Ray Tracing
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
         
       </nav>
     
