@@ -107,6 +107,7 @@ nav:
       - "A. Installation & Setup": appendix/a-installation-and-setup.md
       - "B. Practice Quiz": appendix/b-practice-quiz.md
       - "C. Thrust and CUB: The Standard Library You Get for Free": appendix/c-thrust-and-cub.md
+      - "D. Cooperative Groups and Grid-Wide Synchronization": appendix/d-cooperative-groups.md
 
 extra:
   social: []
