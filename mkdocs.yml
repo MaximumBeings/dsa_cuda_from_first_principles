@@ -90,6 +90,8 @@ nav:
       - "23. Single-Source Shortest Paths": part6/23-single-source-shortest-paths.md
       - "24. Connected Components": part6/24-connected-components.md
       - "25. Minimum Spanning Trees": part6/25-minimum-spanning-trees.md
+  - "Part 7 — Priority Structures and Concurrency":
+      - "26. Heaps and Priority Queues on a GPU": part7/26-heaps-and-priority-queues-on-a-gpu.md
 
 extra:
   social: []
