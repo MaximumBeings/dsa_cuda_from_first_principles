@@ -84,6 +84,8 @@ nav:
   - "Part 5 — Hash Tables":
       - "19. Open Addressing Under Concurrent Insertion": part5/19-open-addressing-under-concurrent-insertion.md
       - "20. Cuckoo Hashing for Guaranteed O(1) Worst-Case Lookup": part5/20-cuckoo-hashing-for-guaranteed-o1-worst-case-lookup.md
+  - "Part 6 — Graphs":
+      - "21. CSR and Its Alternatives": part6/21-csr-and-its-alternatives.md
 
 extra:
   social: []
