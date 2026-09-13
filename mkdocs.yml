@@ -97,6 +97,7 @@ nav:
   - "Part 8 — Case Studies":
       - "29. A GPU Key-Value Store": part8/29-a-gpu-key-value-store.md
       - "30. Spatial Hashing for Particle Simulation": part8/30-spatial-hashing-for-particle-simulation.md
+      - "31. Parallel BVH Construction for Ray Tracing": part8/31-parallel-bvh-construction-for-ray-tracing.md
 
 extra:
   social: []
