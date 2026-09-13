@@ -86,6 +86,7 @@ nav:
       - "20. Cuckoo Hashing for Guaranteed O(1) Worst-Case Lookup": part5/20-cuckoo-hashing-for-guaranteed-o1-worst-case-lookup.md
   - "Part 6 — Graphs":
       - "21. CSR and Its Alternatives": part6/21-csr-and-its-alternatives.md
+      - "22. The Frontier Model for Parallel Breadth-First Search": part6/22-the-frontier-model-for-parallel-breadth-first-search.md
 
 extra:
   social: []
