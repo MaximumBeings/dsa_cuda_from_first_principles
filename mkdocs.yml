@@ -101,6 +101,7 @@ nav:
       - "32. High-Frequency Trading -- A Limit Order Book Matching Engine": part8/32-high-frequency-trading-a-limit-order-book-matching-engine.md
       - "33. Monte Carlo Risk Simulation and Derivatives Pricing": part8/33-monte-carlo-risk-simulation-and-derivatives-pricing.md
       - "34. Genomics -- Large-Scale Sequence Alignment and k-mer Counting": part8/34-genomics-large-scale-sequence-alignment-and-k-mer-counting.md
+      - "35. LiDAR Point-Cloud Nearest-Neighbor Search for Autonomous Vehicles and SLAM": part8/35-lidar-point-cloud-nearest-neighbor-search-for-autonomous-vehicles-and-slam.md
 
 extra:
   social: []
