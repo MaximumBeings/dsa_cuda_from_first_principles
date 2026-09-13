@@ -16,6 +16,8 @@
         <link rel="prev" href="../../part8/36-graph-theoretic-arbitrage-detection-in-foreign-exchange-markets/">
       
       
+        <link rel="next" href="../b-practice-quiz/">
+      
       
         
       
@@ -2111,6 +2113,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a4-running-this-book-on-real-gpu-hardware-via-lambda-cloud" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.4 Running This Book on Real GPU Hardware via Lambda Cloud
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A.4 Running This Book on Real GPU Hardware via Lambda Cloud">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#appendix-summary" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2125,6 +2166,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../b-practice-quiz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    B. Practice Quiz
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2314,6 +2383,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a4-running-this-book-on-real-gpu-hardware-via-lambda-cloud" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.4 Running This Book on Real GPU Hardware via Lambda Cloud
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A.4 Running This Book on Real GPU Hardware via Lambda Cloud">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intuition_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intuition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-in-detail_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Concept, In Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#appendix-summary" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2342,7 +2450,7 @@
 
 
 <h1 id="appendix-a-installation-setup">Appendix A: Installation &amp; Setup<a class="headerlink" href="#appendix-a-installation-setup" title="Permanent link">&para;</a></h1>
-<p>Every chapter in this book states, up front, which of three things a given piece of code is: plain host C++ genuinely compiled with <code>g++</code>, a CUDA kernel genuinely compiled with <code>nvcc</code> and checked by an exhaustive host-side simulation of its exact logic (since this book's own authoring environment has no physical GPU), or a CUDA Runtime API call genuinely made and honestly reported, whatever this environment's own hardware situation causes it to return. None of that is possible without a working toolchain first. This appendix is the thing to run before Chapter 1: it confirms <code>nvcc</code> and <code>g++</code> are both present and speak the language version this book assumes (A.1), turns the CUDA Runtime API calls Section 2.3 already introduced into a practical, plain-language installation checklist (A.2), and hands you a minimal, genuinely-tested <code>Makefile</code> that encodes this book's own compile-line conventions so you never have to retype them by hand (A.3).</p>
+<p>Every chapter in this book states, up front, which of three things a given piece of code is: plain host C++ genuinely compiled with <code>g++</code>, a CUDA kernel genuinely compiled with <code>nvcc</code> and checked by an exhaustive host-side simulation of its exact logic (since this book's own authoring environment has no physical GPU), or a CUDA Runtime API call genuinely made and honestly reported, whatever this environment's own hardware situation causes it to return. None of that is possible without a working toolchain first. This appendix is the thing to run before Chapter 1: it confirms <code>nvcc</code> and <code>g++</code> are both present and speak the language version this book assumes (A.1), turns the CUDA Runtime API calls Section 2.3 already introduced into a practical, plain-language installation checklist (A.2), hands you a minimal, genuinely-tested <code>Makefile</code> that encodes this book's own compile-line conventions so you never have to retype them by hand (A.3), and, for anyone who wants to go one step further than this book's own environment ever could, walks through renting a real GPU by the hour on Lambda Cloud so every kernel in this book can be genuinely launched, not just simulated (A.4).</p>
 <h2 id="a1-confirming-your-toolchain-nvcc-and-g">A.1 Confirming Your Toolchain: nvcc and g++<a class="headerlink" href="#a1-confirming-your-toolchain-nvcc-and-g" title="Permanent link">&para;</a></h2>
 <h3 id="intuition">Intuition<a class="headerlink" href="#intuition" title="Permanent link">&para;</a></h3>
 <p>Before trusting any output this book claims to have "genuinely compiled and run," a reader reproducing it needs the same two pieces this book itself depends on: an <code>nvcc</code> release recent enough to accept the <code>-arch=sm_80</code> target used in every CUDA compile command, and a C++ standard of at least C++17 (structured bindings, <code>if constexpr</code>, and class template argument deduction all appear in later chapters). Both facts are answered by simply asking each tool what it is -- <code>nvcc --version</code> and <code>g++ --version</code> print a real, human-readable banner naming the exact release installed, with no program required.</p>
@@ -2715,8 +2823,57 @@ It is tempting to add a single pattern rule matching both <code>%.cpp</code> and
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>$ LD_LIBRARY_PATH=$NVDIR/lib ./hello_kernel
 <a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>hello_kernel: compiled with nvcc, contains one real __global__ kernel
 </code></pre></div>
+<h2 id="a4-running-this-book-on-real-gpu-hardware-via-lambda-cloud">A.4 Running This Book on Real GPU Hardware via Lambda Cloud<a class="headerlink" href="#a4-running-this-book-on-real-gpu-hardware-via-lambda-cloud" title="Permanent link">&para;</a></h2>
+<h3 id="intuition_3">Intuition<a class="headerlink" href="#intuition_3" title="Permanent link">&para;</a></h3>
+<p>Section A.2's own checklist reports, honestly, that this book's authoring environment has a genuine CUDA Runtime but no driver and no physical device -- which is exactly why every kernel in this book is checked by an exhaustive host-side simulation rather than a real launch. A reader who wants to go one step further and actually LAUNCH these kernels on physical hardware needs a real NVIDIA GPU, and the fastest way to get one without buying it is a pay-per-hour GPU cloud provider. Lambda Cloud (<code>lambda.ai</code>) is a convenient choice for exactly this book, because its default machine image -- Lambda Stack -- ships with the NVIDIA driver, the CUDA toolkit (including <code>nvcc</code>), cuDNN, and NCCL already installed: Section A.2's own <code>209_cuda_runtime_installation_check</code> should report all three of its checks as FOUND on a freshly launched instance, with no separate CUDA installation step of your own required at all.</p>
+<h3 id="the-concept-in-detail_3">The Concept, In Detail<a class="headerlink" href="#the-concept-in-detail_3" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>ASCII view: from this book&#39;s own environment to a real, driver-having GPU.
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>  this book&#39;s sandbox:  CUDA Runtime, no driver, no GPU
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>         |
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>         |  1. create an account at cloud.lambda.ai
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>         |  2. add a public SSH key (console, or `ssh-keygen` locally first)
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>         |  3. launch an instance (pick a GPU type + region, e.g. one A10/A100/H100)
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>         |  4. wait for status &quot;Running&quot;, copy its &quot;ssh ubuntu@&lt;address&gt;&quot; command
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>         v
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>  a real Lambda Cloud instance:  Lambda Stack preinstalled
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>         |
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>         |  5. ssh ubuntu@&lt;address&gt;
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>         |  6. clone this book&#39;s repo, rerun Section A.2&#39;s own check program
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>         v
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>  209_cuda_runtime_installation_check now reports:
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>    CUDA toolkit (runtime library): FOUND
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a>    NVIDIA driver:                  FOUND
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a>    usable GPU device:              FOUND      &lt;-- genuinely different from
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a>                                                     this book&#39;s own sandbox
+</code></pre></div>
+<p>Steps 1 through 4 happen in a web browser, at the Lambda Cloud console; step 5 is an ordinary SSH connection using the username <code>ubuntu</code>, exactly like connecting to any other cloud Linux VM; step 6 is the payoff -- the identical <code>209_cuda_runtime_installation_check.cu</code> file this appendix already compiled and locked in Section A.2 can be recompiled and rerun there completely unchanged, and every <code>-arch=sm_80</code> <code>nvcc</code> compile command this book has used since Chapter 1 is now launching real kernels on real hardware, not merely compiling them.</p>
+<p><strong>On the Lambda Cloud console (a browser, not a terminal):</strong></p>
+<ol>
+<li>Sign up (or sign in) at <code>cloud.lambda.ai</code>.</li>
+<li>Under SSH keys, add a public key -- generate one first if you don't already have one:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>ssh-keygen<span class="w"> </span>-t<span class="w"> </span>ed25519<span class="w"> </span>-C<span class="w"> </span><span class="s2">&quot;dsa-cuda-book&quot;</span>
+</code></pre></div>
+<ol>
+<li>Under Instances, launch a new instance: pick any GPU type with availability in a nearby region (a single A10 or A100 is more than enough for every kernel in this book -- none of them need more than one device), select "Don't attach a filesystem" unless you specifically want persistent storage across instances, and choose the SSH key you just added.</li>
+<li>Wait for the instance's status to change to "Running," then copy the SSH command the console shows you.</li>
+</ol>
+<p><strong>From your own terminal:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>ssh<span class="w"> </span>ubuntu@&lt;the<span class="w"> </span>address<span class="w"> </span>the<span class="w"> </span>console<span class="w"> </span>gave<span class="w"> </span>you&gt;
+</code></pre></div>
+<p><strong>Once connected, clone this book's repo and rerun Section A.2's own check:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>git<span class="w"> </span>clone<span class="w"> </span>&lt;this<span class="w"> </span>book<span class="err">&#39;</span>s<span class="w"> </span>repository<span class="w"> </span>URL&gt;
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="nb">cd</span><span class="w"> </span>dsa_cuda_from_first_principles
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="nv">NVDIR</span><span class="o">=</span><span class="k">$(</span>dirname<span class="w"> </span><span class="k">$(</span>dirname<span class="w"> </span><span class="k">$(</span>which<span class="w"> </span>nvcc<span class="k">)))</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>nvcc<span class="w"> </span>-arch<span class="o">=</span>sm_80<span class="w"> </span>-I<span class="nv">$NVDIR</span>/include<span class="w"> </span>-L<span class="nv">$NVDIR</span>/lib<span class="w"> </span>-lcudart<span class="w"> </span>209_cuda_runtime_installation_check.cu<span class="w"> </span>-o<span class="w"> </span>209_cuda_runtime_installation_check
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>./209_cuda_runtime_installation_check
+</code></pre></div>
+<p>On Lambda Stack, <code>nvcc</code> is already on your <code>PATH</code>, so the <code>NVDIR</code>/<code>-I</code>/<code>-L</code> plumbing this book's sandbox needs (because its toolkit was installed via a pip package rather than system-wide) is usually unnecessary there -- a plain <code>nvcc -arch=sm_80 209_cuda_runtime_installation_check.cu -o 209_cuda_runtime_installation_check</code> is normally enough. Because this specific walkthrough depends on a real, billed, external machine that this book's own authoring environment has no access to, its exact console output cannot be captured and locked here the way every other piece of output in this book is -- but the three-question diagnosis Section A.2 already built is exactly what will answer, for real, whether it worked.</p>
+<p>[COMMON TRAP]
+It is tempting to leave a GPU instance running once you are done experimenting, since disconnecting your SSH session does not stop it. Every pay-per-hour GPU provider, Lambda Cloud included, bills for each hour an instance sits in the "Running" state, whether or not you are actively connected to it or a kernel is currently executing -- the only way to stop being billed is to explicitly terminate the instance from the console (or its API), which is worth making the deliberate last step of any real-hardware session, not an afterthought.</p>
 <h2 id="appendix-summary">Appendix Summary<a class="headerlink" href="#appendix-summary" title="Permanent link">&para;</a></h2>
-<p>Section A.1 confirmed that <code>nvcc</code> and <code>g++</code> are both present and that this book's bare compile commands (no explicit <code>-std</code> flag on the <code>nvcc</code> side) already produce C++17, by reading the same facts a version banner shows back out of nvcc's own preprocessor macros. Section A.2 turned Section 2.3's Runtime-API teaching example into a three-question installation checklist -- toolkit, driver, GPU, checked in that dependency order -- that reports honestly whatever is or is not actually present on the machine running it, this book's own driver-less authoring environment included. Section A.3 packaged both of this book's compile-line conventions into a small, genuinely-tested <code>Makefile</code>, so that every chapter's own stated compile command is something you run once via <code>make</code> rather than retype by hand for every file.</p>
+<p>Section A.1 confirmed that <code>nvcc</code> and <code>g++</code> are both present and that this book's bare compile commands (no explicit <code>-std</code> flag on the <code>nvcc</code> side) already produce C++17, by reading the same facts a version banner shows back out of nvcc's own preprocessor macros. Section A.2 turned Section 2.3's Runtime-API teaching example into a three-question installation checklist -- toolkit, driver, GPU, checked in that dependency order -- that reports honestly whatever is or is not actually present on the machine running it, this book's own driver-less authoring environment included. Section A.3 packaged both of this book's compile-line conventions into a small, genuinely-tested <code>Makefile</code>, so that every chapter's own stated compile command is something you run once via <code>make</code> rather than retype by hand for every file. Section A.4 pointed past this book's own sandbox entirely: a pay-per-hour Lambda Cloud instance comes with the entire toolchain this appendix just finished verifying already installed, and Section A.2's own checklist is the exact tool for confirming it -- with FOUND replacing NOT FOUND in all three places.</p>
 
 
 
@@ -2767,6 +2924,22 @@ It is tempting to add a single pattern rule matching both <code>%.cpp</code> and
             </div>
           </a>
         
+        
+          
+          <a href="../b-practice-quiz/" class="md-footer__link md-footer__link--next" aria-label="Next: B. Practice Quiz">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                B. Practice Quiz
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
         
       </nav>
     
