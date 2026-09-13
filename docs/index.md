@@ -16,7 +16,7 @@ This book is independent: it does not assume or reference any other book in any 
 - **Part 5 — Hash Tables.** Open addressing under concurrent insertion, and cuckoo hashing's genuine, guaranteed O(1) worst-case lookup.
 - **Part 6 — Graphs.** CSR and its alternatives, the frontier model that makes breadth-first search parallel, single-source shortest paths, connected components, and minimum spanning trees.
 - **Part 7 — Priority Structures and Concurrency.** Heaps and priority queues on a GPU, lock-free and atomic-based concurrent structures, and the memory pools that back them.
-- **Part 8 — Case Studies.** A GPU key-value store, spatial hashing for particle simulation, and parallel BVH construction for ray tracing — putting the whole book's toolbox to work on problems that need more than one structure at once.
+- **Part 8 — Case Studies.** A GPU key-value store, spatial hashing for particle simulation, parallel BVH construction for ray tracing, a high-frequency-trading limit order book matching engine, Monte Carlo risk simulation and derivatives pricing, large-scale genomic sequence alignment and k-mer counting, and LiDAR point-cloud nearest-neighbor search for autonomous vehicles and SLAM — putting the whole book's toolbox to work on problems that need more than one structure at once, each one a real, production-relevant use of GPU computing.
 
 ## How to read this book
 
