@@ -81,6 +81,8 @@ nav:
       - "16. Parallel Tree and Trie Construction": part4/16-parallel-tree-and-trie-construction.md
       - "17. Segment and Fenwick Trees for Range Queries": part4/17-segment-and-fenwick-trees-for-range-queries.md
       - "18. Spatial Trees": part4/18-spatial-trees.md
+  - "Part 5 — Hash Tables":
+      - "19. Open Addressing Under Concurrent Insertion": part5/19-open-addressing-under-concurrent-insertion.md
 
 extra:
   social: []
