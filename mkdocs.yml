@@ -79,6 +79,7 @@ nav:
   - "Part 4 — Trees":
       - "15. Binary Trees Without Recursion": part4/15-binary-trees-without-recursion.md
       - "16. Parallel Tree and Trie Construction": part4/16-parallel-tree-and-trie-construction.md
+      - "17. Segment and Fenwick Trees for Range Queries": part4/17-segment-and-fenwick-trees-for-range-queries.md
 
 extra:
   social: []
